@@ -8,10 +8,6 @@ import org.apache.storm.tuple.Tuple;
 
 import java.util.Map;
 
-/**
- * locate com.basic.core.bolt
- * Created by tj on 2017/7/14.
- */
 public abstract class AggregatorBolt extends BaseRichBolt {
 
     private OutputCollector outputCollector;

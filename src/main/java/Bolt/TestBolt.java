@@ -8,9 +8,6 @@ import org.apache.storm.tuple.Tuple;
 
 import java.util.Map;
 
-/**
- * 打印从Kafka中获取的数据
- */
 public class TestBolt extends BaseRichBolt {
 
 

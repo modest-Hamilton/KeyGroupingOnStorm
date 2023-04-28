@@ -8,10 +8,6 @@ import org.apache.storm.tuple.Tuple;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * locate com.basic.storm.bolt
- * Created by tj on 2017/5/8.
- */
 public class WordAggregatorBolt extends AggregatorBolt {
     private Map<String, Long> counts = new HashMap<String, Long>();
 
