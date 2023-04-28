@@ -45,7 +45,7 @@ public class WordCounterBolt extends BaseRichBolt {
     @Override
     public void execute(Tuple tuple) {
         if(isTickTuple(tuple)) {
-            System.out.println("WordCounter Bolt: Tick Tuple !");
+            System.out.println("WordCounter Bolt process Tuples: " + processTuple + " averageProcessTime: " + processTime);
             stop = true;
         }
         if(stop) {
@@ -66,7 +66,7 @@ public class WordCounterBolt extends BaseRichBolt {
             processTime += outTime - inTime;
             outputCollector.emit(tuple,new Values(word,count));
         }
-//        outputCollector.ack(tuple);
+        outputCollector.ack(tuple);
     }
 
     @Override
@@ -78,7 +78,7 @@ public class WordCounterBolt extends BaseRichBolt {
     @Override
     public void cleanup() {
         for(Map.Entry<String, Long> entry : counts.entrySet()) {
-            System.out.println(entry.getKey()+": "+entry.getValue());
+            System.out.println(entry.getKey() + ": " + entry.getValue());
         }
     }
 
@@ -91,9 +91,11 @@ public class WordCounterBolt extends BaseRichBolt {
         @Override
         public void run() {
             jedis.set(String.valueOf(boltID), String.valueOf(processTuple));
-            System.out.println("WordCounter Bolt "+ boltID + " -- processTuple:" + processTuple + "   averageProcessTime:" + processTime / processTuple + "ms");
+//            if(processTuple != 0) {
+//                System.out.println("WordCounter Bolt " + boltID + " -- processTuple:" + processTuple + "   averageProcessTime:" + processTime / processTuple + "ms");
+//            }
 //            processTuple = 0;
-            processTime = 0;
+//            processTime = 0;
         }
     }
 }

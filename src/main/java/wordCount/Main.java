@@ -42,7 +42,7 @@ public class Main {
 //        builder.setBolt("word", new WordCounterBolt(), 3).shuffleGrouping("wordSplit");
 
         Config config = new Config();
-        config.put(Config.TOPOLOGY_TICK_TUPLE_FREQ_SECS, 15);
+        config.put(Config.TOPOLOGY_TICK_TUPLE_FREQ_SECS, 5 * 60);
 
         // 如果外部传参cluster则代表线上环境启动,否则代表本地启动
         if (args.length > 0 && args[0].equals("cluster")) {

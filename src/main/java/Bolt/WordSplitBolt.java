@@ -44,7 +44,7 @@ public class WordSplitBolt extends BaseRichBolt {
                 ID++;
             }
         }
-//        collector.ack(tuple);
+        collector.ack(tuple);
     }
 
     public void cleanup() {}
