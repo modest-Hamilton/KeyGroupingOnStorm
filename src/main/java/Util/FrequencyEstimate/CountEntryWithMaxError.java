@@ -1,5 +1,4 @@
-package Util;
-
+package Util.FrequencyEstimate;
 /**
  * {@link CountEntry}, extended with a field maxError.
  *

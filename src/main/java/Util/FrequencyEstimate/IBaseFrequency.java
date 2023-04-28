@@ -1,5 +1,4 @@
-package Util;
-
+package Util.FrequencyEstimate;
 /**
  *
  * @author Maycon Viana Bordin <mayconbordin@gmail.com>

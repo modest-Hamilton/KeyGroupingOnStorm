@@ -1,4 +1,4 @@
-package util.cardinality;
+package Util.cardinality;
 
 /**
  * This is a very fast, non-cryptographic hash suitable for general hash-based

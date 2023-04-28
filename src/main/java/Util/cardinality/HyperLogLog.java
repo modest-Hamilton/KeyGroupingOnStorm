@@ -1,4 +1,4 @@
-package util.cardinality;
+package Util.cardinality;
 
 import com.clearspring.analytics.stream.cardinality.CardinalityMergeException;
 

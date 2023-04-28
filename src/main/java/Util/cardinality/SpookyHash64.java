@@ -1,4 +1,4 @@
-package util.cardinality;
+package Util.cardinality;
 
 /**
  * A variation of {@link SpookyHash} for use in applications that require only

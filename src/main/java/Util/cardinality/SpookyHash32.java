@@ -1,4 +1,4 @@
-package util.cardinality;
+package Util.cardinality;
 
 /**
  * A non-cryptographic, 128-bit hash function.<p>

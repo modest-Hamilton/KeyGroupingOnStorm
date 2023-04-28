@@ -1,4 +1,4 @@
-package Util;
+package Util.FrequencyEstimate;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;

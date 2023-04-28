@@ -1,4 +1,4 @@
-package Util;
+package Util.FrequencyEstimate;
 
 import java.util.HashMap;
 import java.util.HashSet;

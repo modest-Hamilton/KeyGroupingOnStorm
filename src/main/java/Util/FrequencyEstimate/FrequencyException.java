@@ -1,4 +1,4 @@
-package Util;
+package Util.FrequencyEstimate;
 
 public class FrequencyException extends Exception {
 

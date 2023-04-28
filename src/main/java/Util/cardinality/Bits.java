@@ -1,4 +1,4 @@
-package util.cardinality;
+package Util.cardinality;
 
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
