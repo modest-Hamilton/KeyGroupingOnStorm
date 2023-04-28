@@ -1,4 +1,4 @@
-package util;
+package Util;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -38,7 +38,7 @@ public class SpaceSaving {
 
         this.lSizeLimit = (int) Math.ceil(1.0 / epsilon);
 
-        this.l = new HashMap<Integer, SpaceSaving.Elem>((int) Math.ceil(1 + lSizeLimit / 0.75));
+        this.l = new HashMap<Integer, Elem>((int) Math.ceil(1 + lSizeLimit / 0.75));
 
         this.minSets = new TreeMap<Integer, HashSet<Integer>>();
 
