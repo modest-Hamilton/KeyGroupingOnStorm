@@ -1,4 +1,4 @@
-package util.cardinality;
+package Util.cardinality;
 
 
 public interface IBuilder<T>

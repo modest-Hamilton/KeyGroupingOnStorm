@@ -1,6 +1,4 @@
-package util.load;
-
-import util.cardinality.Hash;
+package Util.cardinality;
 
 /**
  * This is an implementation of Bob Jenkins' hash. It can produce both 32-bit

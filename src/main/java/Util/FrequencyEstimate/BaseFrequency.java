@@ -1,5 +1,4 @@
-package Util;
-
+package Util.FrequencyEstimate;
 
 import java.util.Collections;
 import java.util.List;

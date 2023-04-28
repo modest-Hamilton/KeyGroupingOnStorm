@@ -1,6 +1,5 @@
-package util.cardinality;
+package Util.cardinality;
 
-import util.load.JenkinsHash;
 
 /**
  * This class represents a common API for hashing functions.

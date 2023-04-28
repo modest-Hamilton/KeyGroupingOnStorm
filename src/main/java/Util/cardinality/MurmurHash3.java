@@ -1,4 +1,4 @@
-package util.cardinality;
+package Util.cardinality;
 
 import java.nio.charset.Charset;
 import java.util.Arrays;
