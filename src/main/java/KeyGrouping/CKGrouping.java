@@ -46,6 +46,10 @@ public class CKGrouping implements CustomStreamGrouping {
 
         Vk = HashMultimap.create();
         Vf = new HashMap<>();
+
+        for(int i = 0;i < numServers;i++) {
+            boltWeight.put(i, 0l);
+        }
     }
 
     @Override
@@ -81,7 +85,7 @@ public class CKGrouping implements CustomStreamGrouping {
                 selected = findLeastLoadOneInVk(key);
             }
         }
-        boltWeight.put(selected, boltWeight.get(selected));
+        boltWeight.put(selected, boltWeight.get(selected) + 1);
         boltIds.add(targetTasks.get(selected));
         return boltIds;
     }
@@ -151,7 +155,8 @@ public class CKGrouping implements CustomStreamGrouping {
         @Override
         public void run() {
             for(int i = 0;i < numServers;i++) {
-                boltWeight.put(i, Long.valueOf(jedis.get(String.valueOf(i))));
+                System.out.println("bolt " + i + " get " + targetTasks.get(i) + " weight " + Long.valueOf(jedis.get(String.valueOf(targetTasks.get(i)))));
+                boltWeight.put(i, Long.valueOf(jedis.get(String.valueOf(targetTasks.get(i)))));
             }
         }
     }

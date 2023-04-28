@@ -1,6 +1,8 @@
 package wordCount;
 
+import Bolt.WordCounterBolt;
 import Bolt.WordSplitBolt;
+import KeyGrouping.CKGrouping;
 import Util.Conf;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.storm.Config;
@@ -35,10 +37,13 @@ public class Main {
     public static void main(String[] args) {
         final TopologyBuilder builder = new TopologyBuilder();
         builder.setSpout("kafka_spout", new KafkaSpout<>(getKafkaSpoutConfig(Conf.KAFKA_SERVER, Conf.TOPIC_NAME)), 1);
-        builder.setBolt("bolt", new WordSplitBolt()).shuffleGrouping("kafka_spout");
+        builder.setBolt("wordSplit", new WordSplitBolt()).shuffleGrouping("kafka_spout");
+        builder.setBolt("word", new WordCounterBolt(), 3).customGrouping("wordSplit", new CKGrouping());
+//        builder.setBolt("word", new WordCounterBolt(), 3).shuffleGrouping("wordSplit");
 
         Config config = new Config();
-        config.put(Config.TOPOLOGY_TICK_TUPLE_FREQ_SECS, 10);
+        config.put(Config.TOPOLOGY_TICK_TUPLE_FREQ_SECS, 15);
+
         // 如果外部传参cluster则代表线上环境启动,否则代表本地启动
         if (args.length > 0 && args[0].equals("cluster")) {
             try {
@@ -49,7 +54,7 @@ public class Main {
         } else {
             LocalCluster cluster = new LocalCluster();
             cluster.submitTopology("LocalReadingFromKafkaApp",
-                    new Config(), builder.createTopology());
+                    config, builder.createTopology());
         }
     }
 }

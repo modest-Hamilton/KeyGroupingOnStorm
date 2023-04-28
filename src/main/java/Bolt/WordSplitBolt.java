@@ -13,21 +13,27 @@ import java.util.Map;
 
 public class WordSplitBolt extends BaseRichBolt {
     private long ID;
-
     private OutputCollector collector;
+    boolean stop;
 
     @Override
     public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
         this.collector = outputCollector;
         this.ID = 0;
+        this.stop = false;
     }
 
     @Override
     public void execute(Tuple tuple) {
         if(isTickTuple(tuple)) {
-
+            stop = true;
+            System.out.println("WordSplitBolt: Tick Tuple !");
         }
-        String line = tuple.getString(0);
+        if(stop) {
+            return;
+        }
+        String line = tuple.getStringByField("value");
+        System.out.println("recv from kafka:" + line);
         long inTime = System.currentTimeMillis();
         String[] words = line.split(" ");
         for(String word : words){
@@ -38,14 +44,13 @@ public class WordSplitBolt extends BaseRichBolt {
                 ID++;
             }
         }
-        collector.ack(tuple);
+//        collector.ack(tuple);
     }
 
     public void cleanup() {}
 
     private boolean isTickTuple(Tuple tuple) {
-        return tuple.getSourceComponent().equals(Constants.SYSTEM_COMPONENT_ID)
-                && tuple.getSourceStreamId().equals(Constants.SYSTEM_TICK_STREAM_ID);
+        return tuple.getSourceComponent().equals(Constants.SYSTEM_COMPONENT_ID);
     }
 
     public void declareOutputFields(OutputFieldsDeclarer declarer) {

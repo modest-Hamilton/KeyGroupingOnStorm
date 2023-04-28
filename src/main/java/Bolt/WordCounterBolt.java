@@ -21,11 +21,12 @@ public class WordCounterBolt extends BaseRichBolt {
     private Map<String, Long> counts = new HashMap<String, Long>();
     private OutputCollector outputCollector;
     private long outTime;
-    private long processTime;
+    private double processTime;
     private long processTuple;
     private Timer timer;
     private int boltID;
     private Jedis jedis;
+    private boolean stop;
 
     @Override
     public void prepare(Map conf, TopologyContext context, OutputCollector collector) {
@@ -36,6 +37,7 @@ public class WordCounterBolt extends BaseRichBolt {
         this.outTime = 0l;
         this.processTime = 0l;
         this.processTuple = 0l;
+        this.stop = false;
         this.timer = new Timer();
         timer.schedule(new update(), 4000, 5000);
     }
@@ -43,9 +45,13 @@ public class WordCounterBolt extends BaseRichBolt {
     @Override
     public void execute(Tuple tuple) {
         if(isTickTuple(tuple)) {
-
+            System.out.println("WordCounter Bolt: Tick Tuple !");
+            stop = true;
         }
-        int ID = tuple.getIntegerByField("ID");
+        if(stop) {
+            return;
+        }
+//        long ID = tuple.getLongByField("ID");
         long inTime = tuple.getLongByField("inTime");
         String word = tuple.getStringByField("word");
         if (!word.isEmpty()) {
@@ -56,10 +62,11 @@ public class WordCounterBolt extends BaseRichBolt {
             count++;
             processTuple++;
             counts.put(word, count);
+            outTime = System.currentTimeMillis();
             processTime += outTime - inTime;
             outputCollector.emit(tuple,new Values(word,count));
         }
-        outputCollector.ack(tuple);
+//        outputCollector.ack(tuple);
     }
 
     @Override
@@ -76,8 +83,7 @@ public class WordCounterBolt extends BaseRichBolt {
     }
 
     private boolean isTickTuple(Tuple tuple) {
-        return tuple.getSourceComponent().equals(Constants.SYSTEM_COMPONENT_ID)
-                && tuple.getSourceStreamId().equals(Constants.SYSTEM_TICK_STREAM_ID);
+        return tuple.getSourceComponent().equals(Constants.SYSTEM_COMPONENT_ID);
     }
 
     private class update extends TimerTask {
@@ -85,7 +91,9 @@ public class WordCounterBolt extends BaseRichBolt {
         @Override
         public void run() {
             jedis.set(String.valueOf(boltID), String.valueOf(processTuple));
-            processTuple = 0;
+            System.out.println("WordCounter Bolt "+ boltID + " -- processTuple:" + processTuple + "   averageProcessTime:" + processTime / processTuple + "ms");
+//            processTuple = 0;
+            processTime = 0;
         }
     }
 }
