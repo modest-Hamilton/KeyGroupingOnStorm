@@ -1,10 +1,8 @@
 package KeyGrouping;
 
 
-import clojure.lang.IFn;
 import com.clearspring.analytics.stream.Counter;
 import com.google.common.hash.HashFunction;
-import org.apache.storm.Constants;
 import org.apache.storm.generated.GlobalStreamId;
 import org.apache.storm.grouping.CustomStreamGrouping;
 import org.apache.storm.task.WorkerTopologyContext;

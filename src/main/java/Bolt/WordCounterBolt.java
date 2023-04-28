@@ -1,6 +1,7 @@
 package Bolt;
 
 import Util.Conf;
+import org.apache.storm.Constants;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.OutputFieldsDeclarer;
@@ -41,6 +42,9 @@ public class WordCounterBolt extends BaseRichBolt {
 
     @Override
     public void execute(Tuple tuple) {
+        if(isTickTuple(tuple)) {
+
+        }
         int ID = tuple.getIntegerByField("ID");
         long inTime = tuple.getLongByField("inTime");
         String word = tuple.getStringByField("word");
@@ -69,6 +73,11 @@ public class WordCounterBolt extends BaseRichBolt {
         for(Map.Entry<String, Long> entry : counts.entrySet()) {
             System.out.println(entry.getKey()+": "+entry.getValue());
         }
+    }
+
+    private boolean isTickTuple(Tuple tuple) {
+        return tuple.getSourceComponent().equals(Constants.SYSTEM_COMPONENT_ID)
+                && tuple.getSourceStreamId().equals(Constants.SYSTEM_TICK_STREAM_ID);
     }
 
     private class update extends TimerTask {

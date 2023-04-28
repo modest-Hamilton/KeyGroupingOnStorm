@@ -1,5 +1,6 @@
 package Bolt;
 
+import org.apache.storm.Constants;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.OutputFieldsDeclarer;
@@ -23,6 +24,9 @@ public class WordSplitBolt extends BaseRichBolt {
 
     @Override
     public void execute(Tuple tuple) {
+        if(isTickTuple(tuple)) {
+
+        }
         String line = tuple.getString(0);
         long inTime = System.currentTimeMillis();
         String[] words = line.split(" ");
@@ -39,10 +43,11 @@ public class WordSplitBolt extends BaseRichBolt {
 
     public void cleanup() {}
 
+    private boolean isTickTuple(Tuple tuple) {
+        return tuple.getSourceComponent().equals(Constants.SYSTEM_COMPONENT_ID)
+                && tuple.getSourceStreamId().equals(Constants.SYSTEM_TICK_STREAM_ID);
+    }
 
-    /**
-     * The bolt will only emit the field "word"
-     */
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
         declarer.declare(new Fields("ID", "word", "inTime"));
     }
