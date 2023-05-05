@@ -1,11 +1,11 @@
-package KeyGrouping.DKGrouping;
+package KeyGrouping.DKGrouping_zipf;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-import KeyGrouping.DKGrouping.builder.DKGBuilder;
-import KeyGrouping.DKGrouping.builder.DKGHash;
+import KeyGrouping.DKGrouping_zipf.builder.DKGBuilder;
+import KeyGrouping.DKGrouping_zipf.builder.DKGHash;
 import org.apache.storm.generated.GlobalStreamId;
 import org.apache.storm.grouping.CustomStreamGrouping;
 import org.apache.storm.task.WorkerTopologyContext;
@@ -16,7 +16,7 @@ import org.apache.storm.task.WorkerTopologyContext;
  * 
  * 
  */
-public class DKGStorm implements CustomStreamGrouping, Serializable {
+public class DKGStorm implements CustomStreamGrouping, Serializable  {
 
 	/**
 	 * 
@@ -114,7 +114,6 @@ public class DKGStorm implements CustomStreamGrouping, Serializable {
 
 	@Override
 	public List<Integer> chooseTasks(int taskId, List<Object> values) {
-
 		List<Integer> ret = new ArrayList<Integer>(1);
 		if (m < learningLenght) {
 			m++;

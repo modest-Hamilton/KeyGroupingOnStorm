@@ -1,4 +1,4 @@
-package KeyGrouping.DKGrouping;
+package KeyGrouping.DKGrouping_zipf;
 
 import java.util.List;
 

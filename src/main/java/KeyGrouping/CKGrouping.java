@@ -39,7 +39,7 @@ public class CKGrouping implements CustomStreamGrouping {
         this.boltWeight = new HashMap<>();
         this.jedis = new Jedis(Conf.REDIS_HOST, Conf.REDIS_PORT);
         this.timer = new Timer();
-        timer.schedule(new updateWeight(), 5000,5000);
+//        timer.schedule(new updateWeight(), 5000,5000);
 
         hash = MurmurHash.getInstance();
         lossyCounting = new LossyCounting<>(error);
@@ -155,7 +155,7 @@ public class CKGrouping implements CustomStreamGrouping {
         @Override
         public void run() {
             for(int i = 0;i < numServers;i++) {
-                System.out.println("bolt " + i + " get " + targetTasks.get(i) + " weight " + Long.valueOf(jedis.get(String.valueOf(targetTasks.get(i)))));
+//                System.out.println("bolt " + i + " get " + targetTasks.get(i) + " weight " + Long.valueOf(jedis.get(String.valueOf(targetTasks.get(i)))));
                 boltWeight.put(i, Long.valueOf(jedis.get(String.valueOf(targetTasks.get(i)))));
             }
         }

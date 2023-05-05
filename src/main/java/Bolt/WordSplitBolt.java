@@ -33,7 +33,7 @@ public class WordSplitBolt extends BaseRichBolt {
             return;
         }
         String line = tuple.getStringByField("value");
-        System.out.println("recv from kafka:" + line);
+//        System.out.println("recv from kafka:" + line);
         long inTime = System.currentTimeMillis();
         String[] words = line.split(" ");
         for(String word : words){
@@ -44,7 +44,7 @@ public class WordSplitBolt extends BaseRichBolt {
                 ID++;
             }
         }
-        collector.ack(tuple);
+//        collector.ack(tuple);
     }
 
     public void cleanup() {}

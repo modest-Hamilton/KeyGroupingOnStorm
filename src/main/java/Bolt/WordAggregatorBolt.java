@@ -26,4 +26,9 @@ public class WordAggregatorBolt extends AggregatorBolt {
     public void declareFields(OutputFieldsDeclarer outputFieldsDeclarer) {
         outputFieldsDeclarer.declare(new Fields("word,count"));
     }
+
+    @Override
+    public void cleanup() {
+
+    }
 }

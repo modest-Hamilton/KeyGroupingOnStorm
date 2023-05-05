@@ -2,7 +2,7 @@ package wordCount;
 
 import Bolt.WordCounterBolt;
 import Bolt.WordSplitBolt;
-import KeyGrouping.CKGrouping;
+import KeyGrouping.DKGrouping_string.DKGStorm;
 import Util.Conf;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.storm.Config;
@@ -17,6 +17,10 @@ import org.apache.storm.kafka.spout.KafkaSpoutRetryExponentialBackoff;
 import org.apache.storm.kafka.spout.KafkaSpoutRetryExponentialBackoff.TimeInterval;
 import org.apache.storm.kafka.spout.KafkaSpoutRetryService;
 import org.apache.storm.topology.TopologyBuilder;
+import KeyGrouping.DKGrouping_string.SKey;
+
+import java.io.Serializable;
+import java.util.List;
 
 public class Main {
 
@@ -34,15 +38,30 @@ public class Main {
                 TimeInterval.milliSeconds(2), Integer.MAX_VALUE, TimeInterval.seconds(10));
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         final TopologyBuilder builder = new TopologyBuilder();
-        builder.setSpout("kafka_spout", new KafkaSpout<>(getKafkaSpoutConfig(Conf.KAFKA_SERVER, Conf.TOPIC_NAME)), 1);
+        builder.setSpout("kafka_spout", new KafkaSpout<>(getKafkaSpoutConfig(Conf.KAFKA_SERVER, Conf.TOPIC_NAME)), 5);
         builder.setBolt("wordSplit", new WordSplitBolt()).shuffleGrouping("kafka_spout");
-        builder.setBolt("word", new WordCounterBolt(), 3).customGrouping("wordSplit", new CKGrouping());
-//        builder.setBolt("word", new WordCounterBolt(), 3).shuffleGrouping("wordSplit");
+
+        double theta = 0.1;
+        double factor = 2;
+        int learningLength = 80000;
+        class Key implements SKey, Serializable {
+            @Override
+            public String get(List<Object> values) {
+                return values.get(0).toString();
+            }
+        };
+
+        builder.setBolt("wordCounter", new WordCounterBolt(), 36).customGrouping("wordSplit",
+                new DKGStorm(theta, factor, learningLength, new Key()));
+
+//        builder.setBolt("wordCounter", new WordCounterBolt(), 36).customGrouping("wordSplit", new CKGrouping());
+//        builder.setBolt("wordCounter", new WordCounterBolt()).fieldsGrouping("wordSplit", new Fields("word"));
+//        builder.setBolt("wordCounter", new WordCounterBolt(), 36).shuffleGrouping("wordSplit");
 
         Config config = new Config();
-        config.put(Config.TOPOLOGY_TICK_TUPLE_FREQ_SECS, 5 * 60);
+        config.put(Config.TOPOLOGY_TICK_TUPLE_FREQ_SECS, 11 * 60);
 
         // 如果外部传参cluster则代表线上环境启动,否则代表本地启动
         if (args.length > 0 && args[0].equals("cluster")) {
@@ -55,6 +74,7 @@ public class Main {
             LocalCluster cluster = new LocalCluster();
             cluster.submitTopology("LocalReadingFromKafkaApp",
                     config, builder.createTopology());
+//            Thread.sleep(2 * 60 * 1000);
         }
     }
 }

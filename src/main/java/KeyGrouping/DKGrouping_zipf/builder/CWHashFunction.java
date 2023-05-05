@@ -1,4 +1,4 @@
-package KeyGrouping.DKGrouping.builder;
+package KeyGrouping.DKGrouping_zipf.builder;
 
 /**
  * @author Nicolo Rivetti
