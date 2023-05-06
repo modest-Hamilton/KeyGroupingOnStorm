@@ -19,7 +19,7 @@ public class CKGrouping implements CustomStreamGrouping {
     private int numServers;
     private float delta;
     private double error;  // lossy counting error
-    private double varpesilon; // default = 2.0
+    private double varpesilon; // default = 2.0, varpesilon = ((1 + sqrt(5)) / 2) ^ (1 / z), z is the skewness of zipf data
     private Hash hash;
     private LossyCounting<Object> lossyCounting;
     private HashMap<Integer, Long> boltWeight;
