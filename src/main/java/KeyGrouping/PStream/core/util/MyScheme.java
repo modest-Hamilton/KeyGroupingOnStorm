@@ -10,10 +10,6 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-/**
- * locate com.basic.core.util
- * Created by 79875 on 2017/7/17.
- */
 public class MyScheme implements Scheme {
     private static final Charset UTF8_CHARSET = StandardCharsets.UTF_8;
     public static String STRING_SCHEME_KEY = "word";

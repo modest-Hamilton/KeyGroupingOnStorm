@@ -6,10 +6,7 @@ import KeyGrouping.PStream.core.bolt.PredictorBolt;
 import KeyGrouping.PStream.core.bolt.SchedulerBolt;
 import org.apache.storm.topology.TopologyBuilder;
 
-/**
- * locate com.basic.core
- * Created by tj on 2017/7/18.
- */
+
 public class SchedulingTopologyBuilder extends TopologyBuilder {
 
     private int schedulingNum=0;

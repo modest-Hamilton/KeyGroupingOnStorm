@@ -31,6 +31,7 @@ public class SchedulerBolt extends BaseRichBolt {
 
     public void execute(Tuple tuple) {
         if(tuple.getSourceComponent().equals(UPSTREAM_COMPONENT_ID)){
+            long inTime = tuple.getLongByField("inTime");
             String word = tuple.getStringByField(UPSTREAM_FIELDS);
             if(word.length() <= 0) {
                 collector.ack(tuple);
@@ -39,9 +40,9 @@ public class SchedulerBolt extends BaseRichBolt {
             collector.emit(Constraints.coinFileds, new Values(word));
             Key ky = new Key(word.getBytes());
             if(bf.membershipTest(ky))
-                collector.emit(Constraints.hotFileds, tuple, new Values(word));
+                collector.emit(Constraints.hotFileds, tuple, new Values(word, inTime));
             else
-                collector.emit(Constraints.nohotFileds, tuple, new Values(word));
+                collector.emit(Constraints.nohotFileds, tuple, new Values(word, inTime));
 
         }else {
             String key = tuple.getStringByField(Constraints.wordFileds);
@@ -52,7 +53,7 @@ public class SchedulerBolt extends BaseRichBolt {
             if(bf.membershipTest(hk) && type.equals(0))
                 bf.delete(hk);
         }
-        collector.ack(tuple);
+//        collector.ack(tuple);
     }
 
     public void cleanup(){
@@ -60,8 +61,8 @@ public class SchedulerBolt extends BaseRichBolt {
 
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
         declarer.declareStream(Constraints.coinFileds, new Fields(Constraints.wordFileds));
-        declarer.declareStream(Constraints.hotFileds, new Fields(Constraints.wordFileds));
-        declarer.declareStream(Constraints.nohotFileds, new Fields(Constraints.wordFileds));
+        declarer.declareStream(Constraints.hotFileds, new Fields(Constraints.wordFileds, "inTime"));
+        declarer.declareStream(Constraints.nohotFileds, new Fields(Constraints.wordFileds, "inTime"));
     }
 
 }

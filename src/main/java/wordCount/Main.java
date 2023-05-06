@@ -45,8 +45,7 @@ public class Main {
         builder.setBolt("wordSplit", new WordSplitBolt()).shuffleGrouping("kafka_spout");
 
         builder.setBolt("wordCounter", new WordCounterBolt(), 36).customGrouping("wordSplit", new CKGrouping());
-//        builder.setBolt("wordCounter", new WordCounterBolt()).fieldsGrouping("wordSplit", new Fields("word"));
-//        builder.setBolt("wordCounter", new WordCounterBolt(), 36).shuffleGrouping("wordSplit");
+
 
         Config config = new Config();
         config.put(Config.TOPOLOGY_TICK_TUPLE_FREQ_SECS, 11 * 60);
