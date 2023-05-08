@@ -44,14 +44,14 @@ public class PStreamTopology {
 //        Integer numworkers=Integer.valueOf(7);
 
         builder.setSpout("kafka_spout", new KafkaSpout<>(getKafkaSpoutConfig(Conf.KAFKA_SERVER, Conf.TOPIC_NAME)), 5);
-        builder.setBolt("reviewSplit", new ReviewSplitBolt()).shuffleGrouping("kafka_spout");
+        builder.setBolt("reviewSplit", new ReviewSplitBolt(),5).shuffleGrouping("kafka_spout");
         builder.setDifferentiatedScheduling("reviewSplit","product_id");
         builder.setBolt("reviewResult",new ReviewProcessBolt(), 36).fieldsGrouping(SCHEDULER_BOLT_ID+builder.getSchedulingNum(), Constraints.nohotFileds, new Fields("product_id")).shuffleGrouping(SCHEDULER_BOLT_ID+builder.getSchedulingNum(), Constraints.hotFileds);
         //Topology config
         Config config=new Config();
-        config.put(Config.TOPOLOGY_TICK_TUPLE_FREQ_SECS, 11 * 60);
-//        config.setNumWorkers(numworkers);//config numworkers
-        if(args[0].equals("local")){
+//        config.put(Config.TOPOLOGY_TICK_TUPLE_FREQ_SECS, 11 * 60);
+        config.setNumWorkers(7);//config numworkers
+        if(args.length > 0 && args[0].equals("local")){
             LocalCluster localCluster=new LocalCluster();
 
             localCluster.submitTopology(TOPOLOGY_NAME,config,builder.createTopology());

@@ -1,6 +1,7 @@
 package Bolt;
 
-import javafx.util.Pair;
+import Util.Conf;
+import Util.pair;
 import org.apache.hadoop.yarn.webapp.hamlet.Hamlet;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
@@ -11,6 +12,10 @@ import org.apache.storm.tuple.Values;
 import redis.clients.jedis.Jedis;
 
 import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.logging.*;
 import java.util.logging.Formatter;
@@ -28,7 +33,7 @@ public class ReviewProcessBolt extends BaseRichBolt {
     private int ticks;
     private HashMap<String, Long> ratingOfProduct;
     private HashMap<String, Long> counts;
-    private HashMap<String, List<Pair<String,String>>> customerInfo;
+    private HashMap<String, List<pair<String,String>>> customerInfo;
     private volatile static int nothing = 0;
     private boolean enableLog;
     private FileHandler handler;
@@ -43,7 +48,7 @@ public class ReviewProcessBolt extends BaseRichBolt {
         this.totalProcessTuple = 0l;
         this.processTuple = 0l;
         this.stop = false;
-        this.enableLog = false;
+        this.enableLog = true;
         this.timer = new Timer();
         this.gtimer = new Timer();
         this.ticks = 0;
@@ -122,10 +127,10 @@ public class ReviewProcessBolt extends BaseRichBolt {
         }
 
         if(customerInfo.containsKey(customer_id)) {
-            customerInfo.get(customer_id).add(new Pair<>(product_id,review_id));
+            customerInfo.get(customer_id).add(new pair<>(product_id, review_id));
         } else {
-            List<Pair<String,String>> info = new ArrayList<>();
-            info.add(new Pair<>(product_id,review_id));
+            List<pair<String,String>> info = new ArrayList<>();
+            info.add(new pair<>(product_id,review_id));
             customerInfo.put(customer_id,info);
         }
 
@@ -156,13 +161,13 @@ public class ReviewProcessBolt extends BaseRichBolt {
             counts.put(word, count);
         }
 
-        nothing = 0;
-        while (nothing < 100000) {
-            doNothing();
-            ++nothing;
-        }
+//        nothing = 0;
+//        while (nothing < 100000) {
+//            doNothing();
+//            ++nothing;
+//        }
 
-        outTime = System.currentTimeMillis();
+        outTime = getCurTime();
         totalProcessTime += (outTime - inTime);
         outputCollector.emit(tuple,new Values(product_id,star_rating));
     }
@@ -198,5 +203,40 @@ public class ReviewProcessBolt extends BaseRichBolt {
             stop = true;
             timer.cancel();
         }
+    }
+
+    private long getCurTime() {
+        try (DatagramSocket socket = new DatagramSocket()) {
+            InetAddress address = InetAddress.getByName(Conf.NTP_SERVER);
+            byte[] data = createMessage();
+            DatagramPacket packet = new DatagramPacket(data, data.length, address, Conf.NTP_PORT);
+            socket.send(packet);
+            socket.receive(packet);
+            long receiveTime = System.currentTimeMillis();
+            byte[] responseData = packet.getData();
+            long originTime = getTime(responseData, 24);
+            long receiveTimeStamp = getTime(responseData, 32);
+            long transmitTimeStamp = getTime(responseData, 40);
+            long destinationTime = receiveTime;
+            long roundTripTime = (destinationTime - originTime) - (transmitTimeStamp - receiveTimeStamp);
+            long currentTime = transmitTimeStamp + roundTripTime / 2;
+            return currentTime;
+        } catch (Exception e) {
+            System.err.println(e);
+        }
+        return -100000L;
+    }
+
+    private static long getTime(byte[] data, int offset) {
+        ByteBuffer buffer = (ByteBuffer) ByteBuffer.allocate(Long.BYTES).put(data, offset, Long.BYTES).flip();
+        long seconds = buffer.getLong();
+        buffer.clear();
+        return seconds == 0L ? -1L : (seconds - 2208988800L) * 1000L;
+    }
+
+    private static byte[] createMessage() {
+        byte[] message = new byte[48];
+        message[0] = 0x1B;
+        return message;
     }
 }

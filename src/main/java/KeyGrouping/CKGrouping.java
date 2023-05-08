@@ -15,7 +15,7 @@ import redis.clients.jedis.Jedis;
 import java.util.*;
 
 public class CKGrouping implements CustomStreamGrouping {
-    private static final float DEFAULT_DELTA = 0.000005f; // 10^-6
+    private static final float DEFAULT_DELTA = 0.000001f; // 10^-6
     private int numServers;
     private float delta;
     private double error;  // lossy counting error
@@ -68,16 +68,15 @@ public class CKGrouping implements CustomStreamGrouping {
 
         double estimatedFrequency = (float) estimatedCount / lossyCounting.size();
 
-        // 当估计频率大于基准频率，则认为该键值已是高频键值
         if (estimatedFrequency <= delta) {
             selected = hash(key);
             Vk.put(key, selected);
         } else {
-            if(!Vf.containsKey(key)) { //第一次突破基准频率，更新其基准频率
+            if(!Vf.containsKey(key)) {
                 selected = findLeastLoadOneInV();
                 Vk.put(key, selected);
                 Vf.put(key, (double)delta);
-            } else if(estimatedFrequency >= Vf.get(key) * varpesilon) { //当超过倍数频率时，更新基准频率并扩展下游算子
+            } else if(estimatedFrequency >= Vf.get(key) * varpesilon) {
                 selected = extendOneMoreNode(key);
                 Vk.put(key, selected);
                 Vf.replace(key, Vf.get(key) * varpesilon);
