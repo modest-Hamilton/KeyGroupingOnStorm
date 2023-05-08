@@ -35,7 +35,6 @@ public class WordCounterBolt extends BaseRichBolt {
     public void prepare(Map conf, TopologyContext context, OutputCollector collector) {
         this.jedis = new Jedis(Conf.REDIS_HOST, Conf.REDIS_PORT);
         this.boltID = context.getThisTaskId();
-        final int thisTaskId = context.getThisTaskIndex();
         this.outputCollector = collector;
         this.outTime = 0l;
         this.totalProcessTime = 0l;
@@ -52,15 +51,9 @@ public class WordCounterBolt extends BaseRichBolt {
 
     @Override
     public void execute(Tuple tuple) {
-//        if(isTickTuple(tuple)) {
-//            System.out.println("WordCounter Bolt " + boltID + " process Tuples: " + totalProcessTuple + " averageProcessTime: " + totalProcessTime / totalProcessTuple);
-//            timer.cancel();
-//            stop = true;
-//        }
         if(stop) {
             return;
         }
-//        long ID = tuple.getLongByField("ID");
         long inTime = tuple.getLongByField("inTime");
         String word = tuple.getStringByField("word");
         if (!word.isEmpty()) {

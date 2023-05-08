@@ -12,14 +12,12 @@ import org.apache.storm.tuple.Values;
 import java.util.Map;
 
 public class WordSplitBolt extends BaseRichBolt {
-    private long ID;
     private OutputCollector collector;
     boolean stop;
 
     @Override
     public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
         this.collector = outputCollector;
-        this.ID = 0;
         this.stop = false;
     }
 
@@ -40,8 +38,7 @@ public class WordSplitBolt extends BaseRichBolt {
             word = word.trim();
             if(!word.isEmpty()){
                 word = word.toLowerCase();
-                collector.emit(new Values(ID, word, inTime));
-                ID++;
+                collector.emit(new Values(word, inTime));
             }
         }
 //        collector.ack(tuple);
@@ -54,6 +51,6 @@ public class WordSplitBolt extends BaseRichBolt {
     }
 
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
-        declarer.declare(new Fields("ID", "word", "inTime"));
+        declarer.declare(new Fields("word", "inTime"));
     }
 }
