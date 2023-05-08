@@ -10,7 +10,10 @@ import org.apache.storm.tuple.Tuple;
 import org.apache.storm.tuple.Values;
 import redis.clients.jedis.Jedis;
 
+import java.io.IOException;
 import java.util.*;
+import java.util.logging.*;
+import java.util.logging.Formatter;
 
 public class ReviewProcessBolt extends BaseRichBolt {
     private OutputCollector outputCollector;
@@ -27,6 +30,9 @@ public class ReviewProcessBolt extends BaseRichBolt {
     private HashMap<String, Long> counts;
     private HashMap<String, List<Pair<String,String>>> customerInfo;
     private volatile static int nothing = 0;
+    private boolean enableLog;
+    private FileHandler handler;
+    private Logger LOGGER;
 
     @Override
     public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
@@ -37,6 +43,7 @@ public class ReviewProcessBolt extends BaseRichBolt {
         this.totalProcessTuple = 0l;
         this.processTuple = 0l;
         this.stop = false;
+        this.enableLog = false;
         this.timer = new Timer();
         this.gtimer = new Timer();
         this.ticks = 0;
@@ -44,8 +51,29 @@ public class ReviewProcessBolt extends BaseRichBolt {
         this.ratingOfProduct = new HashMap<>();
         this.customerInfo = new HashMap<>();
 
+        if(this.enableLog) {
+            this.LOGGER = Logger.getLogger(String.valueOf(boltID));
+            String logFileName = "/log/Bolt-" + String.valueOf(boltID) + ".log";
+            try {
+                this.handler = new FileHandler(logFileName, true);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            handler.setFormatter(new Formatter() {
+                @Override
+                public String format(LogRecord record) {
+                    String message = record.getMessage();
+                    if (message.endsWith(System.lineSeparator())) {
+                        message = message.substring(0, message.length() - System.lineSeparator().length());
+                    }
+                    return "[" + record.getLevel() + "] " + message + System.lineSeparator();
+                }
+            });
+            LOGGER.addHandler(handler);
+        }
+
         timer.schedule(new update(), 60 * 1000, 60 * 1000);
-        gtimer.schedule(new stop(), 10 * 60 * 1000, 10 * 60 * 1000);
+//        gtimer.schedule(new stop(), 10 * 60 * 1000, 10 * 60 * 1000);
     }
 
     /*
@@ -68,9 +96,6 @@ public class ReviewProcessBolt extends BaseRichBolt {
      */
     @Override
     public void execute(Tuple tuple) {
-        if(stop) {
-            return;
-        }
         String product_id = tuple.getStringByField("product_id");
         String marketplace = tuple.getStringByField("marketplace");
         String customer_id = tuple.getStringByField("customer_id");
@@ -138,7 +163,7 @@ public class ReviewProcessBolt extends BaseRichBolt {
         }
 
         outTime = System.currentTimeMillis();
-        totalProcessTime += outTime - inTime;
+        totalProcessTime += (outTime - inTime);
         outputCollector.emit(tuple,new Values(product_id,star_rating));
     }
 
@@ -156,7 +181,11 @@ public class ReviewProcessBolt extends BaseRichBolt {
         @Override
         public void run() {
             ticks++;
-            System.out.println(ticks + " --- ReviewProcess Bolt " + boltID + " process Tuples: " + totalProcessTuple + " averageProcessTime: " + totalProcessTime / totalProcessTuple + " ms");
+            if(enableLog) {
+                LOGGER.log(Level.INFO,ticks + " --- ReviewProcess Bolt " + boltID + " process Tuples: " + totalProcessTuple + " averageProcessTime: " + totalProcessTime / totalProcessTuple + " ms");
+            } else {
+                System.out.println(ticks + " --- ReviewProcess Bolt " + boltID + " process Tuples: " + totalProcessTuple + " averageProcessTime: " + totalProcessTime / totalProcessTuple + " ms");
+            }
             totalProcessTime = 0;
             totalProcessTuple = 0;
         }

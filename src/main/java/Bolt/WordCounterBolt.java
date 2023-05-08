@@ -11,10 +11,12 @@ import org.apache.storm.tuple.Tuple;
 import org.apache.storm.tuple.Values;
 import redis.clients.jedis.Jedis;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.logging.*;
 
 
 public class WordCounterBolt extends BaseRichBolt {
@@ -30,6 +32,9 @@ public class WordCounterBolt extends BaseRichBolt {
     private Jedis jedis;
     private boolean stop;
     private int ticks;
+    private boolean enableLog;
+    private FileHandler handler;
+    private Logger LOGGER;
 
     @Override
     public void prepare(Map conf, TopologyContext context, OutputCollector collector) {
@@ -41,9 +46,31 @@ public class WordCounterBolt extends BaseRichBolt {
         this.totalProcessTuple = 0l;
         this.processTuple = 0l;
         this.stop = false;
+        this.enableLog = false;
         this.timer = new Timer();
         this.gtimer = new Timer();
         this.ticks = 0;
+
+        if(this.enableLog) {
+            this.LOGGER = Logger.getLogger(String.valueOf(boltID));
+            String logFileName = "/log/Bolt-" + String.valueOf(boltID) + ".log";
+            try {
+                this.handler = new FileHandler(logFileName, true);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            handler.setFormatter(new Formatter() {
+                @Override
+                public String format(LogRecord record) {
+                    String message = record.getMessage();
+                    if (message.endsWith(System.lineSeparator())) {
+                        message = message.substring(0, message.length() - System.lineSeparator().length());
+                    }
+                    return "[" + record.getLevel() + "] " + message + System.lineSeparator();
+                }
+            });
+            LOGGER.addHandler(handler);
+        }
 
         timer.schedule(new update(), 60 * 1000, 60 * 1000);
         gtimer.schedule(new stop(), 10 * 60 * 1000, 10 * 60 * 1000);
@@ -105,14 +132,12 @@ public class WordCounterBolt extends BaseRichBolt {
 
         @Override
         public void run() {
-//            jedis.set(String.valueOf(boltID), String.valueOf(processTuple));
-//            if(processTuple != 0) {
-//                System.out.println("WordCounter Bolt " + boltID + " -- processTuple:" + processTuple);
-//            }
-//            processTuple = 0;
-//            processTime = 0;
             ticks++;
-            System.out.println(ticks + " --- WordCounter Bolt " + boltID + " process Tuples: " + totalProcessTuple + " averageProcessTime: " + totalProcessTime / totalProcessTuple + " ms");
+            if(enableLog) {
+                LOGGER.log(Level.INFO,ticks + " --- WordCounter Bolt " + boltID + " process Tuples: " + totalProcessTuple + " averageProcessTime: " + totalProcessTime / totalProcessTuple + " ms");
+            } else {
+                System.out.println(ticks + " --- WordCounter Bolt " + boltID + " process Tuples: " + totalProcessTuple + " averageProcessTime: " + totalProcessTime / totalProcessTuple + " ms");
+            }
             totalProcessTime = 0;
             totalProcessTuple = 0;
         }
