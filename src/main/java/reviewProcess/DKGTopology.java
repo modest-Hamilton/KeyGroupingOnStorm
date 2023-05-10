@@ -1,5 +1,6 @@
 package reviewProcess;
 
+import Bolt.ReviewProcessBolt;
 import Bolt.ReviewSplitBolt;
 import Bolt.WordCounterBolt;
 import Bolt.WordSplitBolt;
@@ -39,11 +40,11 @@ public class DKGTopology {
 
     public static void main(String[] args) throws InterruptedException {
         final TopologyBuilder builder = new TopologyBuilder();
-        builder.setSpout("kafka_spout", new KafkaSpout<>(getKafkaSpoutConfig(Conf.KAFKA_SERVER, Conf.TOPIC_NAME)), 5);
-        builder.setBolt("reviewSplit", new ReviewSplitBolt(),5).shuffleGrouping("kafka_spout");
+        builder.setSpout("kafka_spout", new KafkaSpout<>(getKafkaSpoutConfig(Conf.KAFKA_SERVER, Conf.TOPIC_NAME)), 7);
+        builder.setBolt("reviewSplit", new ReviewSplitBolt(),7).shuffleGrouping("kafka_spout");
 
         double theta = 0.1;
-        double factor = 2;
+        double factor = 1;
         int learningLength = 80000;
         class Key implements SKey, Serializable {
             @Override
@@ -52,7 +53,7 @@ public class DKGTopology {
             }
         };
 
-        builder.setBolt("reviewResult", new WordCounterBolt(), 36).customGrouping("reviewSplit",
+        builder.setBolt("reviewResult", new ReviewProcessBolt(), 14).customGrouping("reviewSplit",
                 new DKGStorm(theta, factor, learningLength, new Key()));
 
         Config config = new Config();

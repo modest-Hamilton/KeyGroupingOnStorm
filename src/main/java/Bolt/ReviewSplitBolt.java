@@ -2,6 +2,7 @@ package Bolt;
 
 import Util.Conf;
 import org.apache.commons.net.ntp.NTPUDPClient;
+import org.apache.commons.net.ntp.TimeInfo;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.OutputFieldsDeclarer;
@@ -10,11 +11,8 @@ import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Tuple;
 import org.apache.storm.tuple.Values;
 
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
+import java.io.IOException;
 import java.net.InetAddress;
-import java.nio.ByteBuffer;
-import java.util.Date;
 import java.util.Map;
 
 public class ReviewSplitBolt extends BaseRichBolt {
@@ -42,7 +40,12 @@ public class ReviewSplitBolt extends BaseRichBolt {
         if(review[0].equals("marketplace")) {
             return;
         }
-        long inTime = getCurTime();
+        long inTime = 0;
+        try {
+            inTime = getCurTime();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         collector.emit(new Values(review[3],
                                   inTime,
                                   review[0],
@@ -59,7 +62,7 @@ public class ReviewSplitBolt extends BaseRichBolt {
                                   review[12],
                                   review[13],
                                   review[14]));
-
+        collector.ack(tuple);
     }
 
     @Override
@@ -82,38 +85,10 @@ public class ReviewSplitBolt extends BaseRichBolt {
                                                 "review_date"));
     }
 
-    private long getCurTime() {
-        try (DatagramSocket socket = new DatagramSocket()) {
-            InetAddress address = InetAddress.getByName(Conf.NTP_SERVER);
-            byte[] data = createMessage();
-            DatagramPacket packet = new DatagramPacket(data, data.length, address, Conf.NTP_PORT);
-            socket.send(packet);
-            socket.receive(packet);
-            long receiveTime = System.currentTimeMillis();
-            byte[] responseData = packet.getData();
-            long originTime = getTime(responseData, 24);
-            long receiveTimeStamp = getTime(responseData, 32);
-            long transmitTimeStamp = getTime(responseData, 40);
-            long destinationTime = receiveTime;
-            long roundTripTime = (destinationTime - originTime) - (transmitTimeStamp - receiveTimeStamp);
-            long currentTime = transmitTimeStamp + roundTripTime / 2;
-            return currentTime;
-        } catch (Exception e) {
-            System.err.println(e);
-        }
-        return -100000L;
-    }
-
-    private static long getTime(byte[] data, int offset) {
-        ByteBuffer buffer = (ByteBuffer) ByteBuffer.allocate(Long.BYTES).put(data, offset, Long.BYTES).flip();
-        long seconds = buffer.getLong();
-        buffer.clear();
-        return seconds == 0L ? -1L : (seconds - 2208988800L) * 1000L;
-    }
-
-    private static byte[] createMessage() {
-        byte[] message = new byte[48];
-        message[0] = 0x1B;
-        return message;
+    private long getCurTime() throws IOException {
+        InetAddress inetAddress = InetAddress.getByName(Conf.NTP_SERVER);
+        TimeInfo timeInfo = timeClient.getTime(inetAddress);
+        long currentTimeMillis = timeInfo.getMessage().getTransmitTimeStamp().getTime();
+        return currentTimeMillis;
     }
 }

@@ -2,6 +2,9 @@ package Bolt;
 
 import Util.Conf;
 import Util.pair;
+import org.apache.commons.net.ntp.NTPUDPClient;
+import org.apache.commons.net.ntp.TimeInfo;
+import org.apache.hadoop.mapred.TaskStatus;
 import org.apache.hadoop.yarn.webapp.hamlet.Hamlet;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
@@ -22,7 +25,6 @@ import java.util.logging.Formatter;
 
 public class ReviewProcessBolt extends BaseRichBolt {
     private OutputCollector outputCollector;
-    private long outTime;
     private double totalProcessTime;
     private long totalProcessTuple;
     private long processTuple;
@@ -38,23 +40,24 @@ public class ReviewProcessBolt extends BaseRichBolt {
     private boolean enableLog;
     private FileHandler handler;
     private Logger LOGGER;
+    NTPUDPClient timeClient;
 
     @Override
     public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
         this.boltID = topologyContext.getThisTaskId();
         this.outputCollector = outputCollector;
-        this.outTime = 0l;
         this.totalProcessTime = 0l;
         this.totalProcessTuple = 0l;
         this.processTuple = 0l;
         this.stop = false;
-        this.enableLog = true;
+        this.enableLog = false;
         this.timer = new Timer();
         this.gtimer = new Timer();
         this.ticks = 0;
         this.counts = new HashMap<>();
         this.ratingOfProduct = new HashMap<>();
         this.customerInfo = new HashMap<>();
+        this.timeClient = new NTPUDPClient();
 
         if(this.enableLog) {
             this.LOGGER = Logger.getLogger(String.valueOf(boltID));
@@ -77,7 +80,8 @@ public class ReviewProcessBolt extends BaseRichBolt {
             LOGGER.addHandler(handler);
         }
 
-        timer.schedule(new update(), 60 * 1000, 60 * 1000);
+//        timer.schedule(new update(), 60 * 1000, 60 * 1000);
+
 //        gtimer.schedule(new stop(), 10 * 60 * 1000, 10 * 60 * 1000);
     }
 
@@ -162,14 +166,20 @@ public class ReviewProcessBolt extends BaseRichBolt {
         }
 
 //        nothing = 0;
-//        while (nothing < 100000) {
+//        while (nothing < 1000000) {
 //            doNothing();
 //            ++nothing;
 //        }
 
-        outTime = getCurTime();
+        long outTime = 0l;
+//        try {
+//            outTime = getCurTime();
+//        } catch (IOException e) {
+//            throw new RuntimeException(e);
+//        }
         totalProcessTime += (outTime - inTime);
         outputCollector.emit(tuple,new Values(product_id,star_rating));
+        outputCollector.ack(tuple);
     }
 
     private void doNothing() {
@@ -205,38 +215,10 @@ public class ReviewProcessBolt extends BaseRichBolt {
         }
     }
 
-    private long getCurTime() {
-        try (DatagramSocket socket = new DatagramSocket()) {
-            InetAddress address = InetAddress.getByName(Conf.NTP_SERVER);
-            byte[] data = createMessage();
-            DatagramPacket packet = new DatagramPacket(data, data.length, address, Conf.NTP_PORT);
-            socket.send(packet);
-            socket.receive(packet);
-            long receiveTime = System.currentTimeMillis();
-            byte[] responseData = packet.getData();
-            long originTime = getTime(responseData, 24);
-            long receiveTimeStamp = getTime(responseData, 32);
-            long transmitTimeStamp = getTime(responseData, 40);
-            long destinationTime = receiveTime;
-            long roundTripTime = (destinationTime - originTime) - (transmitTimeStamp - receiveTimeStamp);
-            long currentTime = transmitTimeStamp + roundTripTime / 2;
-            return currentTime;
-        } catch (Exception e) {
-            System.err.println(e);
-        }
-        return -100000L;
-    }
-
-    private static long getTime(byte[] data, int offset) {
-        ByteBuffer buffer = (ByteBuffer) ByteBuffer.allocate(Long.BYTES).put(data, offset, Long.BYTES).flip();
-        long seconds = buffer.getLong();
-        buffer.clear();
-        return seconds == 0L ? -1L : (seconds - 2208988800L) * 1000L;
-    }
-
-    private static byte[] createMessage() {
-        byte[] message = new byte[48];
-        message[0] = 0x1B;
-        return message;
+    private long getCurTime() throws IOException {
+        InetAddress inetAddress = InetAddress.getByName(Conf.NTP_SERVER);
+        TimeInfo timeInfo = timeClient.getTime(inetAddress);
+        long currentTimeMillis = timeInfo.getMessage().getTransmitTimeStamp().getTime();
+        return currentTimeMillis;
     }
 }

@@ -36,9 +36,9 @@ public class CKGTopology {
 
     public static void main(String[] args) throws InterruptedException {
         final TopologyBuilder builder = new TopologyBuilder();
-        builder.setSpout("kafka_spout", new KafkaSpout<>(getKafkaSpoutConfig(Conf.KAFKA_SERVER, Conf.TOPIC_NAME)), 5);
-        builder.setBolt("reviewSplit", new ReviewSplitBolt(),5).shuffleGrouping("kafka_spout");
-        builder.setBolt("reviewResult", new ReviewProcessBolt(), 36).customGrouping("reviewSplit", new CKGrouping());
+        builder.setSpout("kafka_spout", new KafkaSpout<>(getKafkaSpoutConfig(Conf.KAFKA_SERVER, Conf.TOPIC_NAME)), 7);
+        builder.setBolt("reviewSplit", new ReviewSplitBolt(),7).shuffleGrouping("kafka_spout");
+        builder.setBolt("reviewResult", new ReviewProcessBolt(), 14).customGrouping("reviewSplit", new CKGrouping());
 
 
         Config config = new Config();

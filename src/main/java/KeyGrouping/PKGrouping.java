@@ -6,7 +6,7 @@ import org.apache.storm.task.WorkerTopologyContext;
 
 import com.google.common.hash.Hashing;
 import com.google.common.hash.HashFunction;
-import util.Seed;
+import Util.Seed;
 
 import java.util.ArrayList;
 import java.util.List;

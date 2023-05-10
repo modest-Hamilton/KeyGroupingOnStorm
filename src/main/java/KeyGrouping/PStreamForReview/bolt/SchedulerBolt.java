@@ -121,7 +121,7 @@ public class SchedulerBolt extends BaseRichBolt {
             if(bf.membershipTest(hk) && type.equals(0))
                 bf.delete(hk);
         }
-//        collector.ack(tuple);
+        collector.ack(tuple);
     }
 
     public void cleanup(){

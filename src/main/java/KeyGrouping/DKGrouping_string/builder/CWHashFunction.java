@@ -37,7 +37,7 @@ public class CWHashFunction {
      *         parameter.
      */
     public int hash(String value) {
-        long longValue = (long) Math.abs(value.hashCode());
+        long longValue = Math.abs(value.hashCode());
         return (int) ((int) ((a * longValue + b) % prime) % codomainSize);
     }
 }

@@ -8,7 +8,7 @@ import org.apache.storm.grouping.CustomStreamGrouping;
 import org.apache.storm.task.WorkerTopologyContext;
 import com.google.common.hash.Hashing;
 import com.clearspring.analytics.stream.StreamSummary;
-import util.Seed;
+import Util.Seed;
 
 import java.util.ArrayList;
 import java.util.HashMap;

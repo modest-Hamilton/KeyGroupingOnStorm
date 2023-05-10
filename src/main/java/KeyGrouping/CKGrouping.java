@@ -15,7 +15,7 @@ import redis.clients.jedis.Jedis;
 import java.util.*;
 
 public class CKGrouping implements CustomStreamGrouping {
-    private static final float DEFAULT_DELTA = 0.000001f; // 10^-6
+    private static final float DEFAULT_DELTA = 0.000002f; // 10^-6
     private int numServers;
     private float delta;
     private double error;  // lossy counting error
