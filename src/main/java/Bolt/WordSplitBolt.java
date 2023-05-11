@@ -38,7 +38,7 @@ public class WordSplitBolt extends BaseRichBolt {
             word = word.trim();
             if(!word.isEmpty()){
                 word = word.toLowerCase();
-                collector.emit(new Values(word, inTime));
+                collector.emit(tuple, new Values(word, inTime));
             }
         }
 //        collector.ack(tuple);

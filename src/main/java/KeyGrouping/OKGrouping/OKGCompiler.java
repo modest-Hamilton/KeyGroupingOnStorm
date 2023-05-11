@@ -11,62 +11,26 @@ import java.util.concurrent.CountDownLatch;
 public class OKGCompiler {
     private static OKGCompiler instance;
     private HashMap<String, Integer> routeTable;
-    private CountDownLatch countDownLatch;
     private ArrayList<String> upstreamData;
-    private long historicalLoad[];
-    private boolean hasProcessed;
-    public volatile boolean isProcessing;
-    public volatile boolean isFinished;
-    public volatile boolean allDone;
-    private int finished = 0;
-    private OKGCompiler(CountDownLatch countDownLatch) {
-        this.countDownLatch = countDownLatch;
+    private final long[] historicalLoad;
+    private OKGCompiler() {
         this.historicalLoad = new long[Conf.DOWNSTREAMSERVER];
         this.routeTable = new HashMap<>();
         this.upstreamData = new ArrayList<>();
-        this.hasProcessed = false;
-        this.isProcessing = false;
-        this.isFinished = false;
-        this.allDone = false;
     }
 
     public static synchronized OKGCompiler getInstance() {
         if (instance == null) {
-            CountDownLatch countDownLatch = new CountDownLatch(Conf.UPSTREAMSERVER);
-            instance = new OKGCompiler(countDownLatch);
+            instance = new OKGCompiler();
         }
         return instance;
     }
 
     public synchronized void getData(ArrayList<String> data) {
-        System.out.println("enter getData...");
         upstreamData.addAll(data);
-        finished++;
-        isFinished = false;
-        hasProcessed = false;
-        allDone = false;
     }
 
-    public synchronized void processAsynchronously(int id) {
-        System.out.println("Compiler: Bolt" + id + " enter processAsynchronously...");
-
-        if (hasProcessed) {
-            return;
-        }
-        if(finished == Conf.UPSTREAMSERVER) {
-            hasProcessed = true;
-        } else {
-            return;
-        }
-        System.out.println("Compiler: Bolt" + id + " enter and processData...");
-        finished = 0;
-        countDownLatch = new CountDownLatch(Conf.UPSTREAMSERVER);
-        processData();
-        isFinished = true;
-        System.out.println("Compiler: Bolt" + id + " finished processData...");
-    }
-
-    private void processData() {
+    public void processData() {
         double theta = 0.01;
         double epsilon = theta / 2;
         SpaceSaving<String> spaceSaving = new SpaceSaving<>(epsilon,theta);
@@ -125,8 +89,6 @@ public class OKGCompiler {
             routeTable.put(entry.getKey(), chosen);
             historicalLoad[chosen] += entry.getValue();
         }
-
-        //TODO:notifyAllUpstreamBolt
     }
 
     private int findLeastLoad() {
@@ -150,10 +112,6 @@ public class OKGCompiler {
     }
 
     public synchronized HashMap<String, Integer> getRouteTable() {
-        finished--;
-        if(finished == 0) {
-            allDone = true;
-        }
         return this.routeTable;
     }
 

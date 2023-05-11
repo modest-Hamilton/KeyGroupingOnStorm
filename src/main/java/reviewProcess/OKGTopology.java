@@ -1,8 +1,6 @@
 package reviewProcess;
 
 import Bolt.*;
-import KeyGrouping.DKGrouping_string.DKGStorm;
-import KeyGrouping.DKGrouping_string.SKey;
 import KeyGrouping.OKGrouping.OKGrouping;
 import Util.Conf;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -17,9 +15,8 @@ import org.apache.storm.kafka.spout.KafkaSpoutConfig;
 import org.apache.storm.kafka.spout.KafkaSpoutRetryExponentialBackoff;
 import org.apache.storm.kafka.spout.KafkaSpoutRetryService;
 import org.apache.storm.topology.TopologyBuilder;
+import org.apache.storm.topology.base.BaseWindowedBolt;
 
-import java.io.Serializable;
-import java.util.List;
 
 public class OKGTopology {
     private static KafkaSpoutConfig<String, String> getKafkaSpoutConfig(String bootstrapServers, String topic) {
@@ -40,9 +37,9 @@ public class OKGTopology {
         int learningLength = 1000;
         final TopologyBuilder builder = new TopologyBuilder();
         builder.setSpout("kafka_spout", new KafkaSpout<>(getKafkaSpoutConfig(Conf.KAFKA_SERVER, Conf.TOPIC_NAME)), 7);
-        builder.setBolt("reviewSplit", new ReviewSplitBolt_OKG(learningLength),7).shuffleGrouping("kafka_spout");
-
-        builder.setBolt("reviewResult", new ReviewProcessBolt(), 14).customGrouping("reviewSplit", new OKGrouping());
+        builder.setBolt("reviewSplit", new ReviewSplitBolt(),7).shuffleGrouping("kafka_spout");
+        builder.setBolt("reviewByOKG", new OKGroupingBolt().withWindow(new BaseWindowedBolt.Count(1000),new BaseWindowedBolt.Count(1000))).shuffleGrouping("reviewSplit");
+        builder.setBolt("reviewResult", new ReviewProcessBolt(), 14).customGrouping("reviewByOKG", new OKGrouping());
 
         Config config = new Config();
 //        config.put(Config.TOPOLOGY_TICK_TUPLE_FREQ_SECS, 11 * 60);

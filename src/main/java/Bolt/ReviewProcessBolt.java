@@ -80,7 +80,7 @@ public class ReviewProcessBolt extends BaseRichBolt {
             LOGGER.addHandler(handler);
         }
 
-//        timer.schedule(new update(), 60 * 1000, 60 * 1000);
+        timer.schedule(new update(), 60 * 1000, 60 * 1000);
 
 //        gtimer.schedule(new stop(), 10 * 60 * 1000, 10 * 60 * 1000);
     }
