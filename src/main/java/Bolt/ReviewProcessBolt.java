@@ -4,8 +4,6 @@ import Util.Conf;
 import Util.pair;
 import org.apache.commons.net.ntp.NTPUDPClient;
 import org.apache.commons.net.ntp.TimeInfo;
-import org.apache.hadoop.mapred.TaskStatus;
-import org.apache.hadoop.yarn.webapp.hamlet.Hamlet;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.OutputFieldsDeclarer;
@@ -15,10 +13,7 @@ import org.apache.storm.tuple.Values;
 import redis.clients.jedis.Jedis;
 
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.logging.*;
 import java.util.logging.Formatter;
@@ -50,7 +45,7 @@ public class ReviewProcessBolt extends BaseRichBolt {
         this.totalProcessTuple = 0l;
         this.processTuple = 0l;
         this.stop = false;
-        this.enableLog = false;
+        this.enableLog = true;
         this.timer = new Timer();
         this.gtimer = new Timer();
         this.ticks = 0;
@@ -171,12 +166,13 @@ public class ReviewProcessBolt extends BaseRichBolt {
 //            ++nothing;
 //        }
 
-        long outTime = 0l;
-//        try {
-//            outTime = getCurTime();
-//        } catch (IOException e) {
-//            throw new RuntimeException(e);
-//        }
+//        long outTime = System.currentTimeMillis();
+        long outTime = 0;
+        try {
+            outTime = getCurTime();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         totalProcessTime += (outTime - inTime);
         outputCollector.emit(tuple,new Values(product_id,star_rating));
         outputCollector.ack(tuple);

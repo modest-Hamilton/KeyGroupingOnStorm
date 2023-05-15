@@ -38,9 +38,9 @@ public class WChoicesTopology {
 
     public static void main(String[] args) throws InterruptedException {
         final TopologyBuilder builder = new TopologyBuilder();
-        builder.setSpout("kafka_spout", new KafkaSpout<>(getKafkaSpoutConfig(Conf.KAFKA_SERVER, Conf.TOPIC_NAME)), 7);
-        builder.setBolt("reviewSplit", new ReviewSplitBolt(),7).shuffleGrouping("kafka_spout");
-        builder.setBolt("reviewResult", new ReviewProcessBolt(), 14).customGrouping("reviewSplit", new WChoicesGrouping(5));
+        builder.setSpout("kafka_spout", new KafkaSpout<>(getKafkaSpoutConfig(Conf.KAFKA_SERVER, Conf.TOPIC_NAME)), 2);
+        builder.setBolt("reviewSplit", new ReviewSplitBolt(),5).shuffleGrouping("kafka_spout");
+        builder.setBolt("reviewResult", new ReviewProcessBolt(), 7).customGrouping("reviewSplit", new WChoicesGrouping(5));
 
 
         Config config = new Config();

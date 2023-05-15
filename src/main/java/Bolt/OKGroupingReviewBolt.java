@@ -14,13 +14,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-public class OKGroupingBolt extends BaseWindowedBolt {
+public class OKGroupingReviewBolt extends BaseWindowedBolt {
     private static final long serialVersionUID = 1L;
     private ArrayList<String> collectKey;
     private OKGCompiler compiler;
     private OutputCollector collector;
-    public OKGroupingBolt() {
-    }
 
     @Override
     public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {

@@ -38,9 +38,9 @@ public class HolisticTopology {
 
     public static void main(String[] args) throws InterruptedException {
         final TopologyBuilder builder = new TopologyBuilder();
-        builder.setSpout("kafka_spout", new KafkaSpout<>(getKafkaSpoutConfig(Conf.KAFKA_SERVER, Conf.TOPIC_NAME)), 7);
-        builder.setBolt("reviewSplit", new ReviewSplitBolt(),7).shuffleGrouping("kafka_spout");
-        builder.setBolt("reviewResult", new ReviewProcessBolt(), 14).customGrouping("reviewSplit", new HolisticGrouping());
+        builder.setSpout("kafka_spout", new KafkaSpout<>(getKafkaSpoutConfig(Conf.KAFKA_SERVER, Conf.TOPIC_NAME)), 2);
+        builder.setBolt("reviewSplit", new ReviewSplitBolt(),5).shuffleGrouping("kafka_spout");
+        builder.setBolt("reviewResult", new ReviewProcessBolt(), 7).customGrouping("reviewSplit", new HolisticGrouping());
 
         Config config = new Config();
 //        config.put(Config.TOPOLOGY_TICK_TUPLE_FREQ_SECS, 11 * 60);
@@ -51,7 +51,6 @@ public class HolisticTopology {
             LocalCluster cluster = new LocalCluster();
             cluster.submitTopology("LocalReadingFromKafkaApp",
                     config, builder.createTopology());
-//            Thread.sleep(2 * 60 * 1000);
         } else {
             try {
                 StormSubmitter.submitTopology("ClusterReadingFromKafkaApp", config, builder.createTopology());

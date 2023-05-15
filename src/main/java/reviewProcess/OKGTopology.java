@@ -34,12 +34,13 @@ public class OKGTopology {
     }
 
     public static void main(String[] args) throws InterruptedException {
-        int learningLength = 1000;
+        int learningLength = 3000;
         final TopologyBuilder builder = new TopologyBuilder();
-        builder.setSpout("kafka_spout", new KafkaSpout<>(getKafkaSpoutConfig(Conf.KAFKA_SERVER, Conf.TOPIC_NAME)), 7);
-        builder.setBolt("reviewSplit", new ReviewSplitBolt(),7).shuffleGrouping("kafka_spout");
-        builder.setBolt("reviewByOKG", new OKGroupingBolt().withWindow(new BaseWindowedBolt.Count(1000),new BaseWindowedBolt.Count(1000))).shuffleGrouping("reviewSplit");
-        builder.setBolt("reviewResult", new ReviewProcessBolt(), 14).customGrouping("reviewByOKG", new OKGrouping());
+        builder.setSpout("kafka_spout", new KafkaSpout<>(getKafkaSpoutConfig(Conf.KAFKA_SERVER, Conf.TOPIC_NAME)), 2);
+        builder.setBolt("reviewSplit", new ReviewSplitBolt(),3).shuffleGrouping("kafka_spout");
+        builder.setBolt("reviewByOKG", new OKGroupingReviewBolt().withWindow(new BaseWindowedBolt.Count(learningLength),new BaseWindowedBolt.Count(learningLength))).shuffleGrouping("reviewSplit");
+//        builder.setBolt("reviewResult", new ReviewProcessBolt(), Integer.valueOf(args[0])).customGrouping("reviewByOKG", new OKGrouping());
+        builder.setBolt("reviewResult", new ReviewProcessBolt(), 7).customGrouping("reviewByOKG", new OKGrouping());
 
         Config config = new Config();
 //        config.put(Config.TOPOLOGY_TICK_TUPLE_FREQ_SECS, 11 * 60);

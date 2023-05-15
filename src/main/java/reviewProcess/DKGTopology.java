@@ -40,12 +40,12 @@ public class DKGTopology {
 
     public static void main(String[] args) throws InterruptedException {
         final TopologyBuilder builder = new TopologyBuilder();
-        builder.setSpout("kafka_spout", new KafkaSpout<>(getKafkaSpoutConfig(Conf.KAFKA_SERVER, Conf.TOPIC_NAME)), 7);
-        builder.setBolt("reviewSplit", new ReviewSplitBolt(),7).shuffleGrouping("kafka_spout");
+        builder.setSpout("kafka_spout", new KafkaSpout<>(getKafkaSpoutConfig(Conf.KAFKA_SERVER, Conf.TOPIC_NAME)), 2);
+        builder.setBolt("reviewSplit", new ReviewSplitBolt()).shuffleGrouping("kafka_spout");
 
         double theta = 0.1;
         double factor = 1;
-        int learningLength = 80000;
+        int learningLength = 1585461; //2642435 * 0.6
         class Key implements SKey, Serializable {
             @Override
             public String get(List<Object> values) {
@@ -53,7 +53,7 @@ public class DKGTopology {
             }
         };
 
-        builder.setBolt("reviewResult", new ReviewProcessBolt(), 14).customGrouping("reviewSplit",
+        builder.setBolt("reviewResult", new ReviewProcessBolt(), 7).customGrouping("reviewSplit",
                 new DKGStorm(theta, factor, learningLength, new Key()));
 
         Config config = new Config();
@@ -65,7 +65,6 @@ public class DKGTopology {
             LocalCluster cluster = new LocalCluster();
             cluster.submitTopology("LocalReadingFromKafkaApp",
                     config, builder.createTopology());
-//            Thread.sleep(2 * 60 * 1000);
         } else {
             try {
                 StormSubmitter.submitTopology("ClusterReadingFromKafkaApp", config, builder.createTopology());
