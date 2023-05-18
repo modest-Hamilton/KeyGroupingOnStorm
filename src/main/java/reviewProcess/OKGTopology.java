@@ -34,7 +34,7 @@ public class OKGTopology {
     }
 
     public static void main(String[] args) throws InterruptedException {
-        int learningLength = 3000;
+        int learningLength = 1000;
         final TopologyBuilder builder = new TopologyBuilder();
         builder.setSpout("kafka_spout", new KafkaSpout<>(getKafkaSpoutConfig(Conf.KAFKA_SERVER, Conf.TOPIC_NAME)), 2);
         builder.setBolt("reviewSplit", new ReviewSplitBolt(),3).shuffleGrouping("kafka_spout");

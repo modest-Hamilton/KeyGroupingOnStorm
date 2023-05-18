@@ -32,7 +32,7 @@ public class ZipfDataCounterBolt extends BaseRichBolt {
         this.ticks = 0;
         this.timer = new Timer();
         this.boltID = topologyContext.getThisTaskId();
-        this.enableLog = true;
+        this.enableLog = false;
 
         if(this.enableLog) {
             this.LOGGER = Logger.getLogger(String.valueOf(boltID));

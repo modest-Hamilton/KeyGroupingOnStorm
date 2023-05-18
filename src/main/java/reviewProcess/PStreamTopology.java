@@ -19,7 +19,7 @@ import org.apache.storm.kafka.spout.KafkaSpoutRetryExponentialBackoff;
 import org.apache.storm.kafka.spout.KafkaSpoutRetryService;
 import org.apache.storm.tuple.Fields;
 
-import static KeyGrouping.PStream.core.Constraints.SCHEDULER_BOLT_ID;
+import static KeyGrouping.PStreamCore.Constraints.SCHEDULER_BOLT_ID;
 
 
 public class PStreamTopology {

@@ -1,11 +1,10 @@
 package wordCount;
 
-import Bolt.WordAggregatorBolt;
 import Bolt.WordCounterBolt;
 
 import Bolt.WordSplitBolt;
-import KeyGrouping.PStream.core.Constraints;
-import KeyGrouping.PStream.core.SchedulingTopologyBuilder;
+import KeyGrouping.PStreamCore.Constraints;
+import KeyGrouping.PStreamCore.SchedulingTopologyBuilder;
 import Util.Conf;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.storm.Config;
@@ -19,10 +18,9 @@ import org.apache.storm.kafka.spout.KafkaSpoutConfig;
 import org.apache.storm.kafka.spout.KafkaSpoutRetryExponentialBackoff;
 import org.apache.storm.kafka.spout.KafkaSpoutRetryService;
 import org.apache.storm.tuple.Fields;
-import org.apache.storm.utils.Utils;
 
 
-import static KeyGrouping.PStream.core.Constraints.SCHEDULER_BOLT_ID;
+import static KeyGrouping.PStreamCore.Constraints.SCHEDULER_BOLT_ID;
 
 
 public class PStreamTopology {

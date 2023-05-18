@@ -1,15 +1,14 @@
-package KeyGrouping.PStreamForReview.util;
+package KeyGrouping.PStreamForZipf.util;
 
 
-import KeyGrouping.PStreamForReview.inter.DumpRemoveHandler;
+import KeyGrouping.PStreamForZipf.Constraints;
+import KeyGrouping.PStreamForZipf.inter.DumpRemoveHandler;
 
 import java.io.Serializable;
 import java.util.BitSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
-
-import static KeyGrouping.PStreamCore.Constraints.*;
 
 
 /**
@@ -48,9 +47,9 @@ public class PredictorHotKeyUtil implements Serializable{
      *  @return
      */
     public int countCointUtilUp(){
-        int rand = (int)(Math.random()*Math.pow(2,Threshold_r));
-        int count=Threshold_r-1;
-        while(rand == 0 && count < Threshold_l)     //Max length set equal to max length+r;
+        int rand = (int)(Math.random()*Math.pow(2, Constraints.Threshold_r));
+        int count= Constraints.Threshold_r-1;
+        while(rand == 0 && count < Constraints.Threshold_l)     //Max length set equal to max length+r;
         {
             rand = (int)(Math.random()*2);
             count++;
@@ -62,7 +61,7 @@ public class PredictorHotKeyUtil implements Serializable{
      * Hot word attenuation in hot words
      */
     public void SynopsisHashMapAllDump(DumpRemoveHandler dumpRemoveHandler) {
-        int dumpsize = (int) (1 / Threshold_p);
+        int dumpsize = (int) (1 / Constraints.Threshold_p);
         dumpKeyCount++;
         if (dumpKeyCount == dumpsize) {
             //dump all key
@@ -101,7 +100,7 @@ public class PredictorHotKeyUtil implements Serializable{
         Iterator<Map.Entry<String, BitSet>> iterator = predictHotKeyMap.newEntryIterator();
         while (iterator.hasNext()){
             Map.Entry<String, BitSet> next = iterator.next();
-            if (random.nextDouble()> Threshold_p){
+            if (random.nextDouble()> Constraints.Threshold_p){
                 continue;
             }
             BitSet bitm = next.getValue();
@@ -131,12 +130,12 @@ public class PredictorHotKeyUtil implements Serializable{
      * @param coninCount
      */
     public void PredictorHotKey(String key,int coninCount){
-        int count=coninCount-Threshold_r;
+        int count=coninCount- Constraints.Threshold_r;
         BitSet bitmap=null;
         if(predictHotKeyMap.get(key)!=null)
             bitmap = (BitSet) predictHotKeyMap.get(key);
         else
-            bitmap=new BitSet(Threshold_l);
+            bitmap=new BitSet(Constraints.Threshold_l);
 
         bitmap.set(coninCount);
         predictHotKeyMap.put(key,bitmap);
@@ -152,10 +151,10 @@ public class PredictorHotKeyUtil implements Serializable{
      */
     public void simpleComputPredictorHotKey(String key) {
         int count = countCointUtilUp();
-        int dumpsize = (int) (1 / Threshold_p);
+        int dumpsize = (int) (1 / Constraints.Threshold_p);
 
-        if (count >= Threshold_r) {
-            PredictorHotKey(key, count - Threshold_r);
+        if (count >= Constraints.Threshold_r) {
+            PredictorHotKey(key, count - Constraints.Threshold_r);
             SynopsisHashMapAllDump(new DumpRemoveHandler() {
                 @Override
                 public void dumpRemove(String key) {

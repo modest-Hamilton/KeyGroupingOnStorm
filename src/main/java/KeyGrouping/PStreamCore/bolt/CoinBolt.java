@@ -1,7 +1,7 @@
-package KeyGrouping.PStreamForReview.bolt;
+package KeyGrouping.PStreamCore.bolt;
 
-import KeyGrouping.PStreamForReview.Constraints;
-import KeyGrouping.PStreamForReview.util.PredictorHotKeyUtil;
+import KeyGrouping.PStreamCore.Constraints;
+import KeyGrouping.PStreamCore.util.PredictorHotKeyUtil;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.OutputFieldsDeclarer;
@@ -12,27 +12,25 @@ import org.apache.storm.tuple.Values;
 
 import java.util.Map;
 
-import static KeyGrouping.PStreamCore.Constraints.Threshold_r;
-
 
 public class CoinBolt extends BaseRichBolt {
     private OutputCollector collector;
-    private PredictorHotKeyUtil predictorHotKeyUtil= PredictorHotKeyUtil.getPredictorHotKeyUtilInstance();
+    private PredictorHotKeyUtil predictorHotKeyUtil=PredictorHotKeyUtil.getPredictorHotKeyUtilInstance();
 
     public void prepare(Map conf, TopologyContext context, OutputCollector collector) {
         this.collector = collector;
     }
 
     public void execute(Tuple tuple) {
-        String product_id = tuple.getStringByField("product_id");
+        String word = tuple.getStringByField(Constraints.wordFileds);
         int coincount = predictorHotKeyUtil.countCointUtilUp();
-        if(coincount>=Threshold_r)
-            collector.emit(new Values(product_id,coincount));
+        if(coincount>= Constraints.Threshold_r)
+            collector.emit(new Values(word,coincount));
         collector.ack(tuple);
     }
 
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
-        declarer.declare(new Fields("product_id", Constraints.coinCountFileds));
+        declarer.declare(new Fields(Constraints.wordFileds,Constraints.coinCountFileds));
     }
 
 }

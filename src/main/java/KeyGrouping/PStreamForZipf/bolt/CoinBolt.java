@@ -1,7 +1,5 @@
-package KeyGrouping.PStreamForReview.bolt;
+package KeyGrouping.PStreamForZipf.bolt;
 
-import KeyGrouping.PStreamForReview.Constraints;
-import KeyGrouping.PStreamForReview.util.PredictorHotKeyUtil;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.OutputFieldsDeclarer;
@@ -9,10 +7,10 @@ import org.apache.storm.topology.base.BaseRichBolt;
 import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Tuple;
 import org.apache.storm.tuple.Values;
+import KeyGrouping.PStreamForZipf.Constraints;
+import KeyGrouping.PStreamForZipf.util.PredictorHotKeyUtil;
 
 import java.util.Map;
-
-import static KeyGrouping.PStreamCore.Constraints.Threshold_r;
 
 
 public class CoinBolt extends BaseRichBolt {
@@ -24,15 +22,15 @@ public class CoinBolt extends BaseRichBolt {
     }
 
     public void execute(Tuple tuple) {
-        String product_id = tuple.getStringByField("product_id");
+        String word = tuple.getStringByField("num");
         int coincount = predictorHotKeyUtil.countCointUtilUp();
-        if(coincount>=Threshold_r)
-            collector.emit(new Values(product_id,coincount));
+        if(coincount>= Constraints.Threshold_r)
+            collector.emit(new Values(word,coincount));
         collector.ack(tuple);
     }
 
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
-        declarer.declare(new Fields("product_id", Constraints.coinCountFileds));
+        declarer.declare(new Fields("num", Constraints.coinCountFileds));
     }
 
 }
