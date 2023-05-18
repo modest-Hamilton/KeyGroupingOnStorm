@@ -1,10 +1,9 @@
 package zipfDataProcess;
 
-import Bolt.ReviewProcessBolt;
-import Bolt.ReviewSplitBolt;
 import Bolt.ZipfDataCounterBolt;
 import Bolt.ZipfDataSplitBolt;
-import KeyGrouping.HolisticGrouping;
+import KeyGrouping.CKGrouping;
+import KeyGrouping.PKGrouping;
 import Util.Conf;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.storm.Config;
@@ -19,8 +18,7 @@ import org.apache.storm.kafka.spout.KafkaSpoutRetryExponentialBackoff;
 import org.apache.storm.kafka.spout.KafkaSpoutRetryService;
 import org.apache.storm.topology.TopologyBuilder;
 
-public class HolisticTopology {
-
+public class PKGTopology {
     private static KafkaSpoutConfig<String, String> getKafkaSpoutConfig(String bootstrapServers, String topic) {
         return KafkaSpoutConfig.builder(bootstrapServers, topic)
                 .setProp(ConsumerConfig.GROUP_ID_CONFIG, "kafkaSpoutTestGroup")
@@ -39,17 +37,17 @@ public class HolisticTopology {
         final TopologyBuilder builder = new TopologyBuilder();
         builder.setSpout("kafka_spout", new KafkaSpout<>(getKafkaSpoutConfig(Conf.KAFKA_SERVER, Conf.TOPIC_NAME)), 2);
         builder.setBolt("zipfSplit", new ZipfDataSplitBolt(),3).shuffleGrouping("kafka_spout");
-        builder.setBolt("zipfResult", new ZipfDataCounterBolt(), 7).customGrouping("zipfSplit", new HolisticGrouping());
+
+        builder.setBolt("zipfresult", new ZipfDataCounterBolt(), 7).customGrouping("zipfSplit", new PKGrouping());
 
         Config config = new Config();
-//        config.put(Config.TOPOLOGY_TICK_TUPLE_FREQ_SECS, 11 * 60);
-
-        config.setNumWorkers(7);
+        config.put(Config.TOPOLOGY_TICK_TUPLE_FREQ_SECS, 11 * 60);
 
         if (args.length > 0 && args[0].equals("local")) {
             LocalCluster cluster = new LocalCluster();
             cluster.submitTopology("LocalReadingFromKafkaApp",
                     config, builder.createTopology());
+//            Thread.sleep(2 * 60 * 1000);
         } else {
             try {
                 StormSubmitter.submitTopology("ClusterReadingFromKafkaApp", config, builder.createTopology());

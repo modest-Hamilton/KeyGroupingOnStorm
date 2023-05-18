@@ -56,7 +56,7 @@ public class ReviewProcessBolt extends BaseRichBolt {
 
         if(this.enableLog) {
             this.LOGGER = Logger.getLogger(String.valueOf(boltID));
-            String logFileName = "/log/Bolt-" + String.valueOf(boltID) + ".log";
+            String logFileName = "/log/reviewBolt-" + String.valueOf(boltID) + ".log";
             try {
                 this.handler = new FileHandler(logFileName, true);
             } catch (IOException e) {
