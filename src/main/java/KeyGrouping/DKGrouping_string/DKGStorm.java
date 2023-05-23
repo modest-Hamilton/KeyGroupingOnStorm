@@ -105,6 +105,9 @@ public class DKGStorm implements CustomStreamGrouping, Serializable {
     @Override
     public List<Integer> chooseTasks(int taskId, List<Object> values) {
         List<Integer> ret = new ArrayList<Integer>(1);
+//        if(m % 10000 == 0) {
+//            System.out.println("learned " + m + " Tuples");
+//        }
         if (m < learningLength) {
             m++;
             this.builder.newSample(key.get(values));

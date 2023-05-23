@@ -19,7 +19,11 @@ public class ZipfDataSplitBolt extends BaseRichBolt {
 
     @Override
     public void execute(Tuple tuple) {
+        if(!tuple.contains("value")) {
+            return;
+        }
         String line = tuple.getStringByField("value");
+
 //        System.out.println("recv form kafka:" + line);
         String[] data = line.split(",");
         if(line.length() == 0) {

@@ -43,11 +43,11 @@ public class ReviewSplitBolt extends BaseRichBolt {
 //        System.out.println("recv form kafka: " + line);
 //        long inTime = System.currentTimeMillis();
         long inTime = 0;
-        try {
-            inTime = getCurTime();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+//        try {
+//            inTime = getCurTime();
+//        } catch (IOException e) {
+//            throw new RuntimeException(e);
+//        }
         collector.emit(tuple, new Values(review[3],
                                   inTime,
                                   review[0],

@@ -1,4 +1,4 @@
-package zipfDataProcess;
+package reviewProcess;
 
 import Bolt.*;
 import KeyGrouping.OKGrouping.OKGrouping;
@@ -16,10 +16,8 @@ import org.apache.storm.kafka.spout.KafkaSpoutRetryExponentialBackoff;
 import org.apache.storm.kafka.spout.KafkaSpoutRetryService;
 import org.apache.storm.topology.TopologyBuilder;
 import org.apache.storm.topology.base.BaseWindowedBolt;
-import org.apache.storm.tuple.Fields;
 
-
-public class OKGTopology {
+public class CCGTopology {
     private static KafkaSpoutConfig<String, String> getKafkaSpoutConfig(String bootstrapServers, String topic) {
         return KafkaSpoutConfig.builder(bootstrapServers, topic)
                 .setProp(ConsumerConfig.GROUP_ID_CONFIG, "kafkaSpoutTestGroup")
@@ -38,10 +36,9 @@ public class OKGTopology {
         int learningLength = 1000;
         final TopologyBuilder builder = new TopologyBuilder();
         builder.setSpout("kafka_spout", new KafkaSpout<>(getKafkaSpoutConfig(Conf.KAFKA_SERVER, Conf.TOPIC_NAME)), 2);
-        builder.setBolt("zipfSplit", new ZipfDataSplitBolt(),3).shuffleGrouping("kafka_spout");
-        builder.setBolt("zipfByOKG", new OKGroupingZipfBolt().withWindow(new BaseWindowedBolt.Count(learningLength),new BaseWindowedBolt.Count(learningLength))).shuffleGrouping("zipfSplit");
-        builder.setBolt("zipfCounter", new ZipfDataCounterBolt(), 7).customGrouping("zipfByOKG", new OKGrouping());
-        builder.setBolt("zipfResult", new ZipfDataAggregatorBolt(),7).fieldsGrouping("zipfCounter", new Fields("num"));
+        builder.setBolt("reviewSplit", new ReviewSplitBolt(),3).shuffleGrouping("kafka_spout");
+        builder.setBolt("reviewByCCG", new CCGReviewBolt(7).withWindow(new BaseWindowedBolt.Count(learningLength),new BaseWindowedBolt.Count(learningLength))).shuffleGrouping("reviewSplit");
+        builder.setBolt("reviewResult", new ReviewProcessBolt(), 7).customGrouping("reviewByCCG", new OKGrouping());
         Config config = new Config();
 //        config.put(Config.TOPOLOGY_TICK_TUPLE_FREQ_SECS, 11 * 60);
         config.setNumWorkers(7);

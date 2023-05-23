@@ -160,26 +160,17 @@ public class ReviewProcessBolt extends BaseRichBolt {
             counts.put(word, count);
         }
 
-//        nothing = 0;
-//        while (nothing < 1000000) {
-//            doNothing();
-//            ++nothing;
-//        }
 
 //        long outTime = System.currentTimeMillis();
         long outTime = 0;
-        try {
-            outTime = getCurTime();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+//        try {
+//            outTime = getCurTime();
+//        } catch (IOException e) {
+//            throw new RuntimeException(e);
+//        }
         totalProcessTime += (outTime - inTime);
         outputCollector.emit(tuple,new Values(product_id,star_rating));
         outputCollector.ack(tuple);
-    }
-
-    private void doNothing() {
-
     }
 
     @Override

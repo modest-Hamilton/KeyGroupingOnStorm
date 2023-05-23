@@ -1,4 +1,4 @@
-package KeyGrouping;
+package Bolt;
 
 import Util.Conf;
 import Util.FrequencyEstimate.FrequencyException;
@@ -7,14 +7,19 @@ import Util.cardinality.Hash;
 import Util.cardinality.MurmurHash;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-import org.apache.storm.generated.GlobalStreamId;
-import org.apache.storm.grouping.CustomStreamGrouping;
-import org.apache.storm.task.WorkerTopologyContext;
+import org.apache.storm.task.OutputCollector;
+import org.apache.storm.task.TopologyContext;
+import org.apache.storm.topology.OutputFieldsDeclarer;
+import org.apache.storm.topology.base.BaseWindowedBolt;
+import org.apache.storm.tuple.Fields;
+import org.apache.storm.tuple.Tuple;
+import org.apache.storm.tuple.Values;
+import org.apache.storm.windowing.TupleWindow;
 import redis.clients.jedis.Jedis;
 
 import java.util.*;
 
-public class CKGrouping implements CustomStreamGrouping {
+public class CCGReviewBolt extends BaseWindowedBolt {
     private static final float DEFAULT_DELTA = 0.000002f; // 10^-6
     private int numServers;
     private float delta;
@@ -28,11 +33,15 @@ public class CKGrouping implements CustomStreamGrouping {
     private Multimap<Object, Integer> Vk;   // routing table for heavy hitters
     private HashMap<Object, Double> Vf;   // frequency of heavy hitters
     private List<Integer> targetTasks;
+    private OutputCollector collector;
+
+    public CCGReviewBolt(int parallelism) {
+        this.numServers = parallelism;
+    }
 
     @Override
-    public void prepare(WorkerTopologyContext workerTopologyContext, GlobalStreamId globalStreamId, List<Integer> list) {
-        this.targetTasks = list;
-        this.numServers = list.size();
+    public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
+        this.collector = outputCollector;
         this.delta = DEFAULT_DELTA;
         this.error = delta;
         this.varpesilon = 1.3;
@@ -53,10 +62,55 @@ public class CKGrouping implements CustomStreamGrouping {
     }
 
     @Override
-    public List<Integer> chooseTasks(int i, List<Object> list) {
-        List<Integer> boltIds = new ArrayList<>();
+    public void execute(TupleWindow tupleWindow) {
+        List<Tuple> Tuples = tupleWindow.get();
+        List<Integer> route = new ArrayList<>();
+        for(Tuple tuple: tupleWindow.get()) {
+            String key = tuple.getStringByField("product_id");
+            route.add(chooseWorker(key));
+        }
+        for (int i = 0;i < Tuples.size();i++){
+            Tuple tuple = Tuples.get(i);
+            String product_id = tuple.getStringByField("product_id");
+            String marketplace = tuple.getStringByField("marketplace");
+            String customer_id = tuple.getStringByField("customer_id");
+            String review_id = tuple.getStringByField("review_id");
+            String product_parent = tuple.getStringByField("product_parent");
+            String product_title = tuple.getStringByField("product_title");
+            String product_category = tuple.getStringByField("product_category");
+            String star_rating = tuple.getStringByField("star_rating");
+            String helpful_votes = tuple.getStringByField("helpful_votes");
+            String total_votes = tuple.getStringByField("total_votes");
+            String vine = tuple.getStringByField("vine");
+            String verified_purchase = tuple.getStringByField("verified_purchase");
+            String review_headline = tuple.getStringByField("review_headline");
+            String review_body = tuple.getStringByField("review_body");
+            String review_date = tuple.getStringByField("review_date");
+            long inTime = tuple.getLongByField("inTime");
+
+            collector.emit(tuple, new Values(route.get(i),
+                    product_id,
+                    inTime,
+                    marketplace,
+                    customer_id,
+                    review_id,
+                    product_parent,
+                    product_title,
+                    product_category,
+                    star_rating,
+                    helpful_votes,
+                    total_votes,
+                    vine,
+                    verified_purchase,
+                    review_headline,
+                    review_body,
+                    review_date));
+            collector.ack(tuple);
+        }
+    }
+
+    private int chooseWorker(String key) {
         int selected;
-        String key = list.get(0).toString();
 
         try {
             lossyCounting.add(key);
@@ -84,16 +138,8 @@ public class CKGrouping implements CustomStreamGrouping {
                 selected = findLeastLoadOneInVk(key);
             }
         }
-
-//        processed++;
-//        if(processed == 1e6){
-//            processed = 0;
-//            lossyCounting = new LossyCounting<>(error);
-//        }
-
         boltWeight.put(selected, boltWeight.get(selected) + 1);
-        boltIds.add(targetTasks.get(selected));
-        return boltIds;
+        return selected;
     }
 
     private int extendOneMoreNode(Object key) {
@@ -156,14 +202,24 @@ public class CKGrouping implements CustomStreamGrouping {
         return Math.abs(hash.hash(key)) % numServers;
     }
 
-    private class updateWeight extends TimerTask {
-
-        @Override
-        public void run() {
-            for(int i = 0;i < numServers;i++) {
-//                System.out.println("bolt " + i + " get " + targetTasks.get(i) + " weight " + Long.valueOf(jedis.get(String.valueOf(targetTasks.get(i)))));
-                boltWeight.put(i, Long.valueOf(jedis.get(String.valueOf(targetTasks.get(i)))));
-            }
-        }
+    @Override
+    public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
+        outputFieldsDeclarer.declare(new Fields("chosen_task",
+                "product_id",
+                "inTime",
+                "marketplace",
+                "customer_id",
+                "review_id",
+                "product_parent",
+                "product_title",
+                "product_category",
+                "star_rating",
+                "helpful_votes",
+                "total_votes",
+                "vine",
+                "verified_purchase",
+                "review_headline",
+                "review_body",
+                "review_date"));
     }
 }

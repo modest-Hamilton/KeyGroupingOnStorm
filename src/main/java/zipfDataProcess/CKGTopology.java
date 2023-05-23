@@ -1,9 +1,6 @@
 package zipfDataProcess;
 
-import Bolt.WordCounterBolt;
-import Bolt.WordSplitBolt;
-import Bolt.ZipfDataCounterBolt;
-import Bolt.ZipfDataSplitBolt;
+import Bolt.*;
 import KeyGrouping.CKGrouping;
 import Util.Conf;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -18,6 +15,7 @@ import org.apache.storm.kafka.spout.KafkaSpoutConfig;
 import org.apache.storm.kafka.spout.KafkaSpoutRetryExponentialBackoff;
 import org.apache.storm.kafka.spout.KafkaSpoutRetryService;
 import org.apache.storm.topology.TopologyBuilder;
+import org.apache.storm.tuple.Fields;
 
 public class CKGTopology {
     private static KafkaSpoutConfig<String, String> getKafkaSpoutConfig(String bootstrapServers, String topic) {
@@ -39,10 +37,11 @@ public class CKGTopology {
         builder.setSpout("kafka_spout", new KafkaSpout<>(getKafkaSpoutConfig(Conf.KAFKA_SERVER, Conf.TOPIC_NAME)), 2);
         builder.setBolt("zipfSplit", new ZipfDataSplitBolt(),3).shuffleGrouping("kafka_spout");
 
-        builder.setBolt("zipfresult", new ZipfDataCounterBolt(), 7).customGrouping("zipfSplit", new CKGrouping());
-
+        builder.setBolt("zipfCounter", new ZipfDataCounterBolt(), 7).customGrouping("zipfSplit", new CKGrouping());
+        builder.setBolt("zipfResult", new ZipfDataAggregatorBolt(),7).fieldsGrouping("zipfCounter", new Fields("num"));
         Config config = new Config();
         config.put(Config.TOPOLOGY_TICK_TUPLE_FREQ_SECS, 11 * 60);
+        config.setNumWorkers(7);//config numworkersvim
 
         if (args.length > 0 && args[0].equals("local")) {
             LocalCluster cluster = new LocalCluster();

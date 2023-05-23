@@ -38,12 +38,12 @@ public class DKGTopology {
 
     public static void main(String[] args) throws InterruptedException {
         final TopologyBuilder builder = new TopologyBuilder();
-        builder.setSpout("kafka_spout", new KafkaSpout<>(getKafkaSpoutConfig(Conf.KAFKA_SERVER, Conf.TOPIC_NAME)), 5);
+        builder.setSpout("kafka_spout", new KafkaSpout<>(getKafkaSpoutConfig(Conf.KAFKA_SERVER, Conf.TOPIC_NAME)), 2);
         builder.setBolt("wordSplit", new WordSplitBolt()).shuffleGrouping("kafka_spout");
 
         double theta = 0.1;
         double factor = 2;
-        int learningLength = 80000;
+        int learningLength = 2040000;
         class Key implements SKey, Serializable {
             @Override
             public String get(List<Object> values) {
@@ -51,11 +51,11 @@ public class DKGTopology {
             }
         };
 
-        builder.setBolt("wordCounter", new WordCounterBolt(), 36).customGrouping("wordSplit",
+        builder.setBolt("wordCounter", new WordCounterBolt(), 7).customGrouping("wordSplit",
                 new DKGStorm(theta, factor, learningLength, new Key()));
 
         Config config = new Config();
-        config.put(Config.TOPOLOGY_TICK_TUPLE_FREQ_SECS, 11 * 60);
+        config.setNumWorkers(7);
 
         if (args.length > 0 && args[0].equals("local")) {
             LocalCluster cluster = new LocalCluster();

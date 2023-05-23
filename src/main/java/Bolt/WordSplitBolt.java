@@ -23,25 +23,21 @@ public class WordSplitBolt extends BaseRichBolt {
 
     @Override
     public void execute(Tuple tuple) {
-        if(isTickTuple(tuple)) {
-            stop = true;
-            System.out.println("WordSplitBolt: Tick Tuple !");
-        }
-        if(stop) {
+        String line = tuple.getStringByField("value");
+        if(line.length() == 0) {
             return;
         }
-        String line = tuple.getStringByField("value");
 //        System.out.println("recv from kafka:" + line);
-        long inTime = System.currentTimeMillis();
+        long inTime = 0;
         String[] words = line.split(" ");
         for(String word : words){
             word = word.trim();
             if(!word.isEmpty()){
                 word = word.toLowerCase();
-                collector.emit(tuple, new Values(word, inTime));
+                collector.emit(tuple, new Values(word));
             }
         }
-//        collector.ack(tuple);
+        collector.ack(tuple);
     }
 
     public void cleanup() {}
@@ -51,6 +47,6 @@ public class WordSplitBolt extends BaseRichBolt {
     }
 
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
-        declarer.declare(new Fields("word", "inTime"));
+        declarer.declare(new Fields("word"));
     }
 }

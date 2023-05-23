@@ -4,9 +4,7 @@ import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.OutputFieldsDeclarer;
 import org.apache.storm.topology.base.BaseRichBolt;
-import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Tuple;
-import org.apache.storm.tuple.Values;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -15,29 +13,28 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.*;
 
-public class ZipfDataCounterBolt extends BaseRichBolt {
-    private Map<String, Long> counts;
+public class ZipfDataAggregatorBolt extends BaseRichBolt {
     private OutputCollector collector;
-    private long totalProcessTuple;
-    private double totalProcessTime;
+    private Map<String, Long> counts = new HashMap<String, Long>();
+    private Timer timer;
+    private int boltID;
     private int ticks;
+    private int totalProcessTuple;
+    private int totalProcessTime;
     private boolean enableLog;
     private FileHandler handler;
     private Logger LOGGER;
-    private Timer timer;
-    private int boltID;
     @Override
     public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
-        this.collector = outputCollector;
-        this.counts = new HashMap<>();
         this.ticks = 0;
         this.timer = new Timer();
         this.boltID = topologyContext.getThisTaskId();
+        this.collector = outputCollector;
         this.enableLog = false;
 
         if(this.enableLog) {
             this.LOGGER = Logger.getLogger(String.valueOf(boltID));
-            String logFileName = "/log/zipfCounterBolt-" + String.valueOf(boltID) + ".log";
+            String logFileName = "/log/zipfAggregatorBolt-" + String.valueOf(boltID) + ".log";
             try {
                 this.handler = new FileHandler(logFileName, true);
             } catch (IOException e) {
@@ -61,21 +58,25 @@ public class ZipfDataCounterBolt extends BaseRichBolt {
 
     @Override
     public void execute(Tuple tuple) {
-        String num = tuple.getStringByField("num");
-        Long count = counts.get(num);
-        if (count == null) {
-            count = 0L;
-        }
-        count++;
-        totalProcessTuple++;
-        counts.put(num, count);
-        collector.emit(tuple, new Values(num));
+        AggregatorFunc(collector,tuple);
         collector.ack(tuple);
     }
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declare(new Fields("num"));
+
+    }
+
+    public void AggregatorFunc(OutputCollector outputCollector, Tuple tuple) {
+        String num = tuple.getStringByField("num");
+        Long count = counts.get(num);
+        if (count == null) {
+            count = 0L;
+        }
+        totalProcessTuple++;
+        count+=1;
+        counts.put(num,count);
+        collector.ack(tuple);
     }
 
     private class update extends TimerTask {
@@ -84,9 +85,9 @@ public class ZipfDataCounterBolt extends BaseRichBolt {
         public void run() {
             ticks++;
             if(enableLog) {
-                LOGGER.log(Level.INFO,ticks + " --- WordCounter Bolt " + boltID + " process Tuples: " + totalProcessTuple + " averageProcessTime: " + totalProcessTime / totalProcessTuple + " ms");
+                LOGGER.log(Level.INFO,ticks + " --- WordAggregator Bolt " + boltID + " process Tuples: " + totalProcessTuple + " averageProcessTime: " + totalProcessTime / totalProcessTuple + " ms");
             } else {
-                System.out.println(ticks + " --- WordCounter Bolt " + boltID + " process Tuples: " + totalProcessTuple + " averageProcessTime: " + totalProcessTime / totalProcessTuple + " ms");
+                System.out.println(ticks + " --- WordAggregator Bolt " + boltID + " process Tuples: " + totalProcessTuple + " averageProcessTime: " + totalProcessTime / totalProcessTuple + " ms");
             }
             totalProcessTime = 0;
             totalProcessTuple = 0;

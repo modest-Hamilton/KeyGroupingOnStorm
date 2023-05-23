@@ -1,5 +1,6 @@
 package zipfDataProcess;
 
+import Bolt.ZipfDataAggregatorBolt;
 import Bolt.ZipfDataCounterBolt;
 import Bolt.ZipfDataSplitBolt;
 import KeyGrouping.PStreamForZipf.Constraints;
@@ -45,7 +46,8 @@ public class PStreamTopology {
         builder.setSpout("kafka_spout", new KafkaSpout<>(getKafkaSpoutConfig(Conf.KAFKA_SERVER, Conf.TOPIC_NAME)), 2);
         builder.setBolt("zipfSplit", new ZipfDataSplitBolt(),3).shuffleGrouping("kafka_spout");
         builder.setDifferentiatedScheduling("zipfSplit","num");
-        builder.setBolt("zipfResult",new ZipfDataCounterBolt(), 7).fieldsGrouping(SCHEDULER_BOLT_ID+builder.getSchedulingNum(), Constraints.nohotFileds, new Fields("num")).shuffleGrouping(SCHEDULER_BOLT_ID+builder.getSchedulingNum(), Constraints.hotFileds);
+        builder.setBolt("zipfCounter",new ZipfDataCounterBolt(), 7).fieldsGrouping(SCHEDULER_BOLT_ID+builder.getSchedulingNum(), Constraints.nohotFileds, new Fields("num")).shuffleGrouping(SCHEDULER_BOLT_ID+builder.getSchedulingNum(), Constraints.hotFileds);
+        builder.setBolt("zipfResult", new ZipfDataAggregatorBolt(),7).fieldsGrouping("zipfCounter", new Fields("num"));
         //Topology config
         Config config=new Config();
 //        config.put(Config.TOPOLOGY_TICK_TUPLE_FREQ_SECS, 11 * 60);

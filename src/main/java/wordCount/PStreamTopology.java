@@ -45,24 +45,26 @@ public class PStreamTopology {
         SchedulingTopologyBuilder builder=new SchedulingTopologyBuilder();
 //        Integer numworkers=Integer.valueOf(7);
 
-        builder.setSpout("kafka_spout", new KafkaSpout<>(getKafkaSpoutConfig(Conf.KAFKA_SERVER, Conf.TOPIC_NAME)), 5);
-        builder.setBolt("wordSplit", new WordSplitBolt()).shuffleGrouping("kafka_spout");
+        builder.setSpout("kafka_spout", new KafkaSpout<>(getKafkaSpoutConfig(Conf.KAFKA_SERVER, Conf.TOPIC_NAME)), 2);
+        builder.setBolt("wordSplit", new WordSplitBolt(),3).shuffleGrouping("kafka_spout");
         builder.setDifferentiatedScheduling("wordSplit","word");
-        builder.setBolt(WORDCOUNTER_BOLT_ID,new WordCounterBolt(), 36).fieldsGrouping(SCHEDULER_BOLT_ID+builder.getSchedulingNum(), Constraints.nohotFileds, new Fields(Constraints.wordFileds)).shuffleGrouping(SCHEDULER_BOLT_ID+builder.getSchedulingNum(), Constraints.hotFileds);
+        builder.setBolt(WORDCOUNTER_BOLT_ID,new WordCounterBolt(), 7).fieldsGrouping(SCHEDULER_BOLT_ID+builder.getSchedulingNum(), Constraints.nohotFileds, new Fields(Constraints.wordFileds)).shuffleGrouping(SCHEDULER_BOLT_ID+builder.getSchedulingNum(), Constraints.hotFileds);
 //        builder.setBolt(AGGREGATOR_BOLT_ID, new WordAggregatorBolt(), 36).fieldsGrouping(WORDCOUNTER_BOLT_ID, new Fields(Constraints.wordFileds));
         //Topology config
         Config config=new Config();
-        config.put(Config.TOPOLOGY_TICK_TUPLE_FREQ_SECS, 11 * 60);
+        config.setNumWorkers(7);
 //        config.setNumWorkers(numworkers);//config numworkers
-        if(args[0].equals("local")){
-            LocalCluster localCluster=new LocalCluster();
 
-            localCluster.submitTopology(TOPOLOGY_NAME,config,builder.createTopology());
-//            Utils.sleep(50*1000);//50s
-//            localCluster.killTopology(TOPOLOGY_NAME);
-//            localCluster.shutdown();
-        }else {
-            StormSubmitter.submitTopology(args[0],config,builder.createTopology());
+        if (args.length > 0 && args[0].equals("local")) {
+            LocalCluster cluster = new LocalCluster();
+            cluster.submitTopology("LocalReadingFromKafkaApp",
+                    config, builder.createTopology());
+        } else {
+            try {
+                StormSubmitter.submitTopology("ClusterReadingFromKafkaApp", config, builder.createTopology());
+            } catch (AlreadyAliveException | InvalidTopologyException | AuthorizationException e) {
+                e.printStackTrace();
+            }
         }
 
     }

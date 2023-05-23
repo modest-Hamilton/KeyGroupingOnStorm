@@ -14,22 +14,35 @@ public class DanltonGrouping implements CustomStreamGrouping {
     private int batchSize;
     List<Tuple> batch = new ArrayList<>();
     private int numTuplesInBatch;
-
+    private List<Integer> targetTasks;
     public DanltonGrouping(int parallelism, int slide, int size, int numOfKeys, int batchSize){
         cbandit = new ContextualBandits(parallelism, slide, size, numOfKeys);
-        numOfBatch = 0;
         this.batchSize = batchSize;
-        numTuplesInBatch = 0;
     }
 
     @Override
     public void prepare(WorkerTopologyContext workerTopologyContext, GlobalStreamId globalStreamId, List<Integer> list) {
-
+        numTuplesInBatch = 0;
+        numOfBatch = 0;
+        this.targetTasks = list;
     }
 
     @Override
     public List<Integer> chooseTasks(int i, List<Object> list) {
+        List<Integer> boltIds = new ArrayList<>();
+        int key = Math.abs(list.get(0).toString().hashCode());
+        int ts = numOfBatch * batchSize + numTuplesInBatch;
+        numTuplesInBatch++;
 
-        return null;
+        boolean isHot = cbandit.isHot(key, ts);
+
+        cbandit.expireState(ts, isHot); // here
+
+        int worker = cbandit.partition(key, isHot);
+
+        cbandit.updateState(key, worker);
+        cbandit.updateQtable(key, isHot, worker);
+        boltIds.add(targetTasks.get(worker));
+        return boltIds;
     }
 }

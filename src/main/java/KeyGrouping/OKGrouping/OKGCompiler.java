@@ -89,6 +89,7 @@ public class OKGCompiler {
             routeTable.put(entry.getKey(), chosen);
             historicalLoad[chosen] += entry.getValue();
         }
+        upstreamData.clear();
     }
 
     private int findLeastLoad() {

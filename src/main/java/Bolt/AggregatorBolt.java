@@ -6,12 +6,12 @@ import org.apache.storm.topology.OutputFieldsDeclarer;
 import org.apache.storm.topology.base.BaseRichBolt;
 import org.apache.storm.tuple.Tuple;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public abstract class AggregatorBolt extends BaseRichBolt {
 
     private OutputCollector outputCollector;
-
     public abstract void AggregatorFunc(OutputCollector outputCollector,Tuple tuple);
 
     public abstract void declareFields(OutputFieldsDeclarer outputFieldsDeclarer);

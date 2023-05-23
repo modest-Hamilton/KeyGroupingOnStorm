@@ -1,9 +1,9 @@
-package KeyGrouping.PStreamCore;
+package KeyGrouping.PStreamForVote;
 
 
-import KeyGrouping.PStreamCore.bolt.CoinBolt;
-import KeyGrouping.PStreamCore.bolt.PredictorBolt;
-import KeyGrouping.PStreamCore.bolt.SchedulerBolt;
+import KeyGrouping.PStreamForVote.bolt.CoinBolt;
+import KeyGrouping.PStreamForVote.bolt.PredictorBolt;
+import KeyGrouping.PStreamForVote.bolt.SchedulerBolt;
 import org.apache.storm.topology.TopologyBuilder;
 
 

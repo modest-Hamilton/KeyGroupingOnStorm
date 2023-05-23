@@ -46,7 +46,7 @@ public class WordCounterBolt extends BaseRichBolt {
         this.totalProcessTuple = 0l;
         this.processTuple = 0l;
         this.stop = false;
-        this.enableLog = false;
+        this.enableLog = true;
         this.timer = new Timer();
         this.gtimer = new Timer();
         this.ticks = 0;
@@ -73,15 +73,11 @@ public class WordCounterBolt extends BaseRichBolt {
         }
 
         timer.schedule(new update(), 60 * 1000, 60 * 1000);
-        gtimer.schedule(new stop(), 10 * 60 * 1000, 10 * 60 * 1000);
+//        gtimer.schedule(new stop(), 10 * 60 * 1000, 10 * 60 * 1000);
     }
 
     @Override
     public void execute(Tuple tuple) {
-        if(stop) {
-            return;
-        }
-        long inTime = tuple.getLongByField("inTime");
         String word = tuple.getStringByField("word");
         if (!word.isEmpty()) {
             Long count = counts.get(word);
@@ -92,23 +88,10 @@ public class WordCounterBolt extends BaseRichBolt {
             totalProcessTuple++;
             processTuple++;
             counts.put(word, count);
-
-            int a = 1000,b = 5000;
-            for(int i = 1;i < 1000000;i++) {
-                a += b * i;
-                b = a * i;
-                if(a > b) {
-                    a = b;
-                } else {
-                    b -= a;
-                }
-            }
-
-            outTime = System.currentTimeMillis();
-            totalProcessTime += outTime - inTime;
+            outTime = 0;
             outputCollector.emit(tuple,new Values(word,count));
         }
-//        outputCollector.ack(tuple);
+        outputCollector.ack(tuple);
     }
 
     @Override
