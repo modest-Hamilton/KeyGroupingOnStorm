@@ -1,7 +1,9 @@
 package wordCount;
 
-import Bolt.*;
-import KeyGrouping.OKGrouping.OKGrouping;
+import Bolt.WordCounterBolt;
+import Bolt.WordSplitBolt;
+import KeyGrouping.CKGrouping;
+import KeyGrouping.DAGreedyGrouping;
 import Util.Conf;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.storm.Config;
@@ -15,9 +17,8 @@ import org.apache.storm.kafka.spout.KafkaSpoutConfig;
 import org.apache.storm.kafka.spout.KafkaSpoutRetryExponentialBackoff;
 import org.apache.storm.kafka.spout.KafkaSpoutRetryService;
 import org.apache.storm.topology.TopologyBuilder;
-import org.apache.storm.topology.base.BaseWindowedBolt;
 
-public class CCGTopology {
+public class DAGTopolpgy {
     private static KafkaSpoutConfig<String, String> getKafkaSpoutConfig(String bootstrapServers, String topic) {
         return KafkaSpoutConfig.builder(bootstrapServers, topic)
                 .setProp(ConsumerConfig.GROUP_ID_CONFIG, "kafkaSpoutTestGroup")
@@ -33,21 +34,20 @@ public class CCGTopology {
     }
 
     public static void main(String[] args) throws InterruptedException {
-        int learningLength = 1000;
         final TopologyBuilder builder = new TopologyBuilder();
         builder.setSpout("kafka_spout", new KafkaSpout<>(getKafkaSpoutConfig(Conf.KAFKA_SERVER, Conf.TOPIC_NAME)), 2);
         builder.setBolt("wordSplit", new WordSplitBolt(),3).shuffleGrouping("kafka_spout");
-        builder.setBolt("wordByCCG", new CCGWordBolt(7).withWindow(new BaseWindowedBolt.Count(learningLength),new BaseWindowedBolt.Count(learningLength))).shuffleGrouping("wordSplit");
-        builder.setBolt("wordCounter", new WordCounterBolt(), 7).customGrouping("wordByCCG", new OKGrouping());
-        Config config = new Config();
-//        config.put(Config.TOPOLOGY_TICK_TUPLE_FREQ_SECS, 11 * 60);
-        config.setNumWorkers(7);
 
+        builder.setBolt("wordCounter", new WordCounterBolt(), 7).customGrouping("wordSplit", new DAGreedyGrouping());
+
+        Config config = new Config();
+        config.setNumWorkers(7);
 
         if (args.length > 0 && args[0].equals("local")) {
             LocalCluster cluster = new LocalCluster();
             cluster.submitTopology("LocalReadingFromKafkaApp",
                     config, builder.createTopology());
+//            Thread.sleep(2 * 60 * 1000);
         } else {
             try {
                 StormSubmitter.submitTopology("ClusterReadingFromKafkaApp", config, builder.createTopology());
